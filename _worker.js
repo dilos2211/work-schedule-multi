@@ -1,9 +1,5 @@
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const path = url.pathname;
-    const db = env.DB;
-
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -15,9 +11,28 @@ export default {
     }
 
     try {
+      // Проверяем, подключена ли база данных
+      if (!env.DB) {
+        return new Response(JSON.stringify({ success: false, error: "Ошибка сервера: База данных D1 не привязана к воркеру в Cloudflare!" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      const url = new URL(request.url);
+      const path = url.pathname;
+      const db = env.DB;
+
       // 1. РЕГИСТРАЦИЯ
-      if (path.endsWith("/api/register") && request.method === "POST") {
-        const body = await request.json();
+      if (path.includes("/api/register") && request.method === "POST") {
+        let body;
+        try {
+          body = await request.json();
+        } catch (e) {
+          return new Response(JSON.stringify({ success: false, error: "Неверный формат JSON" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
         const email = body.email;
         const password = body.password;
 
@@ -43,8 +58,8 @@ export default {
       }
 
       // 2. ВХОД
-      if (path.endsWith("/api/login") && request.method === "POST") {
-        const body = await request.json();
+      if (path.includes("/api/login") && request.method === "POST") {
+        let body = await request.json();
         const user = await db.prepare("SELECT * FROM users WHERE email = ? AND password = ?").bind(body.email, body.password).first();
 
         if (!user) {
@@ -59,7 +74,7 @@ export default {
       }
 
       // 3. ПОЛУЧЕНИЕ НАСТРОЕК
-      if (path.endsWith("/api/settings") && request.method === "GET") {
+      if (path.includes("/api/settings") && request.method === "GET") {
         const userId = url.searchParams.get("userId");
         const settings = await db.prepare("SELECT * FROM settings WHERE user_id = ?").bind(userId).first();
         return new Response(JSON.stringify(settings || {}), { 
@@ -68,8 +83,8 @@ export default {
       }
 
       // 4. СОХРАНЕНИЕ НАСТРОЕК
-      if (path.endsWith("/api/settings") && request.method === "POST") {
-        const body = await request.json();
+      if (path.includes("/api/settings") && request.method === "POST") {
+        let body = await request.json();
         await db.prepare(`
           INSERT INTO settings (user_id, calc_type, monthly_rate, rate, bonus, manual_kantyna)
           VALUES (?, ?, ?, ?, ?, ?)
@@ -87,7 +102,7 @@ export default {
       }
 
       // 5. ПОЛУЧЕНИЕ СМЕН
-      if (path.endsWith("/api/shifts") && request.method === "GET") {
+      if (path.includes("/api/shifts") && request.method === "GET") {
         const userId = url.searchParams.get("userId");
         const year = url.searchParams.get("year");
         const month = String(parseInt(url.searchParams.get("month")) + 1).padStart(2, '0');
@@ -103,8 +118,8 @@ export default {
       }
 
       // 6. СОХРАНЕНИЕ СМЕН
-      if (path.endsWith("/api/shifts") && request.method === "POST") {
-        const body = await request.json();
+      if (path.includes("/api/shifts") && request.method === "POST") {
+        let body = await request.json();
         const mStr = String(parseInt(body.month) + 1).padStart(2, '0');
         const scheduleData = body.scheduleData;
 
@@ -128,11 +143,12 @@ export default {
         });
       }
 
-      return new Response(JSON.stringify({ success: false, error: "API endpoint not found: " + path }), { 
+      return new Response(JSON.stringify({ success: false, error: "Endpoint not found: " + path }), { 
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } 
       });
+
     } catch (err) {
-      return new Response(JSON.stringify({ success: false, error: err.message }), { 
+      return new Response(JSON.stringify({ success: false, error: "Worker Exception: " + err.message }), { 
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } 
       });
     }
