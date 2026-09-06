@@ -674,7 +674,11 @@ function calculateStats() {
             totalDays++;
             let h = (s.totalHours || 0);
             accumulatedTotalHours += h;
-            totalNightH += getNightHours(s.start, s.end);
+            
+            // Ночные часы считаем ТОЛЬКО если это 3-я смена
+            if (s.shift === '3') {
+                totalNightH += getNightHours(s.start, s.end);
+            }
         }
     });
 
@@ -701,11 +705,7 @@ function calculateStats() {
     } else {
         let remainingOvertime = totalOvertimeAll;
 
-        // Ночные часы автоматически идут как +100%
-        let allocatedNightTo100 = Math.min(remainingOvertime, totalNightH);
-        autoOvertime100 += allocatedNightTo100;
-        remainingOvertime -= allocatedNightTo100;
-
+        // Выходные/праздники идут в +100% переработку
         Object.entries(scheduleData).forEach(([dayStr, s]) => {
             if (remainingOvertime <= 0) return;
             let dayNum = parseInt(dayStr);
@@ -721,6 +721,7 @@ function calculateStats() {
             }
         });
 
+        // Остальная переработка идет в +50% (включая переработку в ночные часы)
         if (remainingOvertime > 0) {
             autoOvertime50 += remainingOvertime;
         }
@@ -729,7 +730,6 @@ function calculateStats() {
     totalHoursAll = accumulatedTotalHours;
 
     // Расчет по формуле:
-    // Брутто = ((Оклад / Норма часов в месяце) * Все отработанные часы) + Премия + Доплаты за переработки (+50% / +100%)
     if (userSettings.calcType === 'hourly') {
         calculatedMoney = totalHoursAll * (userSettings.rate || 0);
         calculatedMoney += totalNightH * (userSettings.rate || 0); 
@@ -739,9 +739,10 @@ function calculateStats() {
         
         let baseEarnedFromHours = hourlyRateFromMonthly * totalHoursAll;
         let overtimeBonus50Money = autoOvertime50 * (hourlyRateFromMonthly * 0.5);
-        let overtimeBonus100Money = (autoOvertime100 + totalNightH) * (hourlyRateFromMonthly * 1.0);
+        let overtimeBonus100Money = autoOvertime100 * (hourlyRateFromMonthly * 1.0);
+        let nightBonusMoney = totalNightH * (hourlyRateFromMonthly * 1.0); // Доплата за ночные (100%)
         
-        calculatedMoney = baseEarnedFromHours + overtimeBonus50Money + overtimeBonus100Money;
+        calculatedMoney = baseEarnedFromHours + overtimeBonus50Money + overtimeBonus100Money + nightBonusMoney;
     }
 
     // Общая премия + индивидуальные бонусы за дни
@@ -761,7 +762,7 @@ function calculateStats() {
     if (elDays) elDays.innerText = totalDays;
     if (elBase) elBase.innerText = `${totalBaseH.toFixed(1)} ч`;
     if (elOver50) elOver50.innerText = `${autoOvertime50.toFixed(1)} ч`;
-    if (elOver100) elOver100.innerText = `${(autoOvertime100 + totalNightH).toFixed(1)} ч`;
+    if (elOver100) elOver100.innerText = `${autoOvertime100.toFixed(1)} ч`;
     if (elNight) elNight.innerText = `${totalNightH.toFixed(1)} ч`;
     if (elTotalH) elTotalH.innerText = `${totalHoursAll.toFixed(1)} ч`;
     if (elTotalM) elTotalM.innerText = `${calculatedMoney.toFixed(2)} zł`;
