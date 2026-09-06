@@ -1,4 +1,4 @@
-// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js - Settings & Mobile Optimized) ---
+// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js - Clean Save UI) ---
 
 let currentUser = JSON.parse(localStorage.getItem('work_user')) || null;
 let currentYear = new Date().getFullYear();
@@ -14,7 +14,6 @@ let userSettings = {
     rate: 25,
     bonus: 850,
     manualKantyna: 0,
-    // Настройки времени смен по умолчанию
     shiftsConfig: {
         '1': { start: '06:00', end: '14:00' },
         '2': { start: '14:00', end: '22:00' },
@@ -317,6 +316,9 @@ function showMainScreen() {
                     </div>
                 </div>
 
+                <!-- Плашка статуса сохранения для вкладки настроек -->
+                <div id="saveStatusBadgeSettings" style="padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; text-align: center; margin-bottom: 10px; display: none; box-sizing: border-box;"></div>
+
                 <button onclick="saveAllData()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;">Сохранить настройки</button>
             </div>
 
@@ -372,21 +374,24 @@ function setUnsaved() {
 }
 
 function updateSaveStatusUI() {
-    const badge = document.getElementById('saveStatusBadge');
-    if (!badge) return;
+    // Обновляем плашку на вкладке календаря и на вкладке настроек
+    ['saveStatusBadge', 'saveStatusBadgeSettings'].forEach(id => {
+        const badge = document.getElementById(id);
+        if (!badge) return;
 
-    badge.style.display = 'block';
-    if (hasUnsavedChanges) {
-        badge.style.background = '#fef3c7';
-        badge.style.color = '#d97706';
-        badge.style.border = '1px solid #fde68a';
-        badge.innerText = '⚠️ Данные нужно сохранить';
-    } else {
-        badge.style.background = '#dcfce7';
-        badge.style.color = '#16a34a';
-        badge.style.border = '1px solid #bbf7d0';
-        badge.innerText = '✅ Данные сохранены';
-    }
+        badge.style.display = 'block';
+        if (hasUnsavedChanges) {
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#d97706';
+            badge.style.border = '1px solid #fde68a';
+            badge.innerText = '⚠️ Данные нужно сохранить';
+        } else {
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#16a34a';
+            badge.style.border = '1px solid #bbf7d0';
+            badge.innerText = '✅ Данные сохранены';
+        }
+    });
 }
 
 // --- ЛОГИКА КАЛЕНДАРЯ И РАСЧЕТОВ ---
@@ -673,10 +678,11 @@ async function loadSettings() {
             userSettings.bonus = data.bonus !== undefined ? data.bonus : 850;
             userSettings.manualKantyna = data.manual_kantyna || 0;
             
-            // Если с сервера пришла конфигурация смен
             if (data.shifts_config) {
                 try {
-                    userSettings.shiftsConfig = typeof data.shifts_config === 'string' ? JSON.parse(data.shifts_config) : data.shifts_config;
+                    userSettings.shifts_config = typeof data.shifts_config === 'string' ? JSON.parse(data.shifts_config) : data.shifts_config;
+                    // Поддержка ключей
+                    userSettings.shiftsConfig = userSettings.shifts_config;
                 } catch (e) { console.error('Ошибка парсинга смен:', e); }
             }
 
@@ -752,10 +758,16 @@ async function saveAllData() {
             })
         });
         hasUnsavedChanges = false;
-        updateSaveStatusUI();
-        alert('Настройки и отчет успешно сохранены!');
+        updateSaveStatusUI(); // Переключает плашку на «✅ Данные сохранены» без всплывающих окон
     } catch (e) {
         console.error('Ошибка сохранения отчета:', e);
-        alert('Ошибка при сохранении отчета!');
+        const badge = document.getElementById('saveStatusBadge') || document.getElementById('saveStatusBadgeSettings');
+        if (badge) {
+            badge.style.display = 'block';
+            badge.style.background = '#fee2e2';
+            badge.style.color = '#dc2626';
+            badge.style.border = '1px solid #fca5a5';
+            badge.innerText = '❌ Ошибка при сохранении!';
+        }
     }
 }
