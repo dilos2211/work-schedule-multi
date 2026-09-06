@@ -1,4 +1,4 @@
-[source: 1]import { t, getLang, setLang, translations } from './translations.js';
+import { t, getLang, setLang, translations } from './translations.js';
 import { 
     currentUser, currentYear, currentMonth, scheduleData, activeTab, 
     selectedDayForModal, hasUnsavedChanges, currentModalShift, isRegisterMode,
