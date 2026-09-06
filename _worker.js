@@ -142,9 +142,8 @@ export default {
         });
       }
 
-      return new Response(JSON.stringify({ success: false, error: "Endpoint not found: " + path }), { 
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      });
+      // Если это не API-запрос, отдаем статические файлы (HTML, CSS, JS) из Cloudflare Pages
+      return env.ASSETS.fetch(request);
 
     } catch (err) {
       return new Response(JSON.stringify({ success: false, error: "Worker Exception: " + err.message }), { 
