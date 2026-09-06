@@ -50,7 +50,7 @@ function initDb() {
       )
     `);
 
-    // 3. Таблица индивидуальных настроек зарплаты и времени смен пользователя
+    // 3. Таблица индивидуальных настроек зарплаты и смен пользователя
     db.run(`
       CREATE TABLE IF NOT EXISTS user_settings (
         user_id INTEGER PRIMARY KEY,
@@ -59,7 +59,7 @@ function initDb() {
         rate REAL DEFAULT 25,
         bonus REAL DEFAULT 850,
         manual_kantyna REAL DEFAULT 0,
-        shifts_config TEXT,
+        shift1_start TEXT DEFAULT '06:00',
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
@@ -92,12 +92,7 @@ app.post('/api/register', async (req, res) => {
 
         const userId = this.lastID;
         // Создаем дефолтные настройки для нового пользователя
-        const defaultShiftsConfig = JSON.stringify({
-          '1': { start: '06:00', end: '14:00' },
-          '2': { start: '14:00', end: '22:00' },
-          '3': { start: '22:00', end: '06:00' }
-        });
-        db.run('INSERT INTO user_settings (user_id, shifts_config) VALUES (?, ?)', [userId, defaultShiftsConfig]);
+        db.run('INSERT INTO user_settings (user_id, shift1_start) VALUES (?, ?)', [userId, '06:00']);
 
         res.json({ success: true, user: { id: userId, email } });
       }
@@ -135,16 +130,6 @@ app.get('/api/settings', (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.json({});
 
-    // Корректно парсим shifts_config из строки в JSON перед отправкой клиенту
-    let shiftsConfig = row.shifts_config;
-    if (typeof shiftsConfig === 'string') {
-      try {
-        shiftsConfig = JSON.parse(shiftsConfig);
-      } catch (e) {
-        shiftsConfig = null;
-      }
-    }
-
     res.json({
       user_id: row.user_id,
       calc_type: row.calc_type,
@@ -152,25 +137,31 @@ app.get('/api/settings', (req, res) => {
       rate: row.rate,
       bonus: row.bonus,
       manual_kantyna: row.manual_kantyna,
-      shifts_config: shiftsConfig
+      shift1_start: row.shift1_start
     });
   });
 });
 
 app.post('/api/settings', (req, res) => {
-  const { userId, calcType, monthlyRate, rate, bonus, manualKantyna, shiftsConfig } = req.body;
+  const { userId, calcType, monthlyRate, rate, bonus, manualKantyna, shift1Start } = req.body;
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-  // Превращаем объект конфигурации смен в JSON-строку для хранения в TEXT колонке
-  const shiftsConfigStr = JSON.stringify(shiftsConfig || {});
-
   db.run(
-    `UPDATE user_settings 
-     SET calc_type = ?, monthly_rate = ?, rate = ?, bonus = ?, manual_kantyna = ?, shifts_config = ?
-     WHERE user_id = ?`,
-    [calcType, monthlyRate, rate, bonus, manualKantyna, shiftsConfigStr, userId],
+    `INSERT INTO user_settings (user_id, calc_type, monthly_rate, rate, bonus, manual_kantyna, shift1_start)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+        calc_type = excluded.calc_type,
+        monthly_rate = excluded.monthly_rate,
+        rate = excluded.rate,
+        bonus = excluded.bonus,
+        manual_kantyna = excluded.manual_kantyna,
+        shift1_start = excluded.shift1_start`,
+    [userId, calcType, monthlyRate, rate, bonus, manualKantyna, shift1Start || '06:00'],
     (err) => {
-      if (err) return res.status(500).json({ success: false, error: err.message });
+      if (err) {
+        console.error('Ошибка сохранения настроек в БД:', err.message);
+        return res.status(500).json({ success: false, error: err.message });
+      }
       res.json({ success: true });
     }
   );
@@ -229,7 +220,6 @@ app.post('/api/shifts', (req, res) => {
       const dayStr = String(dayNum).padStart(2, '0');
       const workDate = `${year}-${targetMonthStr}-${dayStr}`;
 
-      // Сначала пробуем обновить, если запись есть
       db.get(
         "SELECT id FROM reports WHERE user_id = ? AND work_date = ?",
         [userId, workDate],

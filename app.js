@@ -14,11 +14,7 @@ let userSettings = {
     rate: 25,
     bonus: 850,
     manualKantyna: 0,
-    shiftsConfig: {
-        '1': { start: '06:00', end: '14:00' },
-        '2': { start: '14:00', end: '22:00' },
-        '3': { start: '22:00', end: '06:00' }
-    }
+    shift1Start: '06:00' // Базовая точка для расчета всех смен
 };
 
 const monthNames = [
@@ -77,6 +73,30 @@ function getHolidayName(year, month, day) {
     return found ? found.name : null;
 }
 
+// Вспомогательные функции расчета времени смен
+function addHoursToTime(timeStr, hoursToAdd) {
+    let [h, m] = timeStr.split(':').map(Number);
+    let totalM = h * 60 + m + hoursToAdd * 60;
+    let newH = Math.floor(totalM / 60) % 24;
+    let newM = totalM % 60;
+    return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+}
+
+function getCalculatedShiftsConfig() {
+    const s1Start = userSettings.shift1Start || '06:00';
+    const s1End = addHoursToTime(s1Start, 8);
+    const s2Start = s1End;
+    const s2End = addHoursToTime(s2Start, 8);
+    const s3Start = s2End;
+    const s3End = s1Start;
+
+    return {
+        '1': { start: s1Start, end: s1End },
+        '2': { start: s2Start, end: s2End },
+        '3': { start: s3Start, end: s3End }
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
@@ -93,9 +113,10 @@ function initApp() {
     if (!currentUser) {
         showAuthScreen();
     } else {
-        showMainScreen();
-        loadSettings();
-        loadShifts();
+        loadSettings().then(() => {
+            showMainScreen();
+            loadShifts();
+        });
     }
 }
 
@@ -146,7 +167,7 @@ async function handleAuth(event) {
     event.preventDefault();
     const email = document.getElementById('authEmail').value;
     const password = document.getElementById('authPassword').value;
-    const endpoint = isRegisterMode ? '/register' : '/login';
+    const endpoint = isRegisterMode ? '/api/register' : '/api/login';
 
     const errBox = document.getElementById('errorMsg');
     errBox.style.display = 'none';
@@ -182,6 +203,7 @@ function logout() {
 
 function showMainScreen() {
     const isHourly = userSettings.calcType === 'hourly';
+    const shifts = getCalculatedShiftsConfig();
 
     document.body.style.backgroundColor = "#f4f4f5";
     document.body.style.margin = "0";
@@ -266,57 +288,23 @@ function showMainScreen() {
                 <p style="color: #71717a; font-size: 13px; line-height: 1.4;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни согласно вашему графику.</p>
             </div>
 
-            <!-- Вкладка: Настройки (Время смен) -->
+            <!-- Вкладка: Настройки -->
             <div id="viewSettings" style="display: ${activeTab === 'settings' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; box-sizing: border-box;">
-                <h3 style="margin-top: 0; color: #18181b; font-size: 16px; margin-bottom: 10px;">⏰ Время смен по умолчанию</h3>
-                <p style="color: #71717a; font-size: 12px; line-height: 1.4; margin-bottom: 15px;">Укажите стандартные часы начала и конца для каждой смены. При выборе смены в календаре эти значения будут подставляться автоматически.</p>
+                <h3 style="margin-top: 0; color: #18181b; font-size: 16px; margin-bottom: 10px;">⏰ Настройка времени смен</h3>
+                <p style="color: #71717a; font-size: 12px; line-height: 1.4; margin-bottom: 15px;">Укажите время начала 1-й смены. Остальные смены рассчитаются автоматически (+8 часов каждая).</p>
                 
-                <!-- 1 смена -->
-                <div style="background: #ffffff; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                    <div style="font-weight: bold; font-size: 13px; color: #1d4ed8; margin-bottom: 8px;">1 смена</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <div>
-                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">С какого:</label>
-                            <input type="time" id="cfgShift1Start" value="${userSettings.shiftsConfig['1'].start}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
-                        </div>
-                        <div>
-                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">По какое:</label>
-                            <input type="time" id="cfgShift1End" value="${userSettings.shiftsConfig['1'].end}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2 смена -->
-                <div style="background: #ffffff; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                    <div style="font-weight: bold; font-size: 13px; color: #c2410c; margin-bottom: 8px;">2 смена</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <div>
-                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">С какого:</label>
-                            <input type="time" id="cfgShift2Start" value="${userSettings.shiftsConfig['2'].start}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
-                        </div>
-                        <div>
-                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">По какое:</label>
-                            <input type="time" id="cfgShift2End" value="${userSettings.shiftsConfig['2'].end}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3 смена -->
                 <div style="background: #ffffff; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                    <div style="font-weight: bold; font-size: 13px; color: #6d28d9; margin-bottom: 8px;">3 смена</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <div>
-                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">С какого:</label>
-                            <input type="time" id="cfgShift3Start" value="${userSettings.shiftsConfig['3'].start}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
-                        </div>
-                        <div>
-                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">По какое:</label>
-                            <input type="time" id="cfgShift3End" value="${userSettings.shiftsConfig['3'].end}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
-                        </div>
-                    </div>
+                    <label style="font-size: 12px; font-weight: bold; color: #1d4ed8; display: block; margin-bottom: 5px;">Начало 1-й смены:</label>
+                    <input type="time" id="cfgShift1Start" value="${userSettings.shift1Start}" onchange="updateShift1ConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box; background: #fff; font-size: 14px;">
                 </div>
 
-                <!-- Плашка статуса сохранения для вкладки настроек -->
+                <div style="background: #ffffff; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #52525b; line-height: 1.5;">
+                    <div style="font-weight: bold; margin-bottom: 5px; color: #18181b;">Автоматический график:</div>
+                    <div>🟢 1 смена: <strong>${shifts['1'].start} - ${shifts['1'].end}</strong></div>
+                    <div>🟠 2 смена: <strong>${shifts['2'].start} - ${shifts['2'].end}</strong></div>
+                    <div>🟣 3 смена: <strong>${shifts['3'].start} - ${shifts['3'].end}</strong></div>
+                </div>
+
                 <div id="saveStatusBadgeSettings" style="padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; text-align: center; margin-bottom: 10px; display: none; box-sizing: border-box;"></div>
 
                 <button onclick="saveAllData()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;">Сохранить настройки</button>
@@ -366,8 +354,6 @@ function showMainScreen() {
     updateSaveStatusUI();
 }
 
-// --- УПРАВЛЕНИЕ СТАТУСОМ СОХРАНЕНИЯ ---
-
 function setUnsaved() {
     hasUnsavedChanges = true;
     updateSaveStatusUI();
@@ -392,8 +378,6 @@ function updateSaveStatusUI() {
         }
     });
 }
-
-// --- ЛОГИКА КАЛЕНДАРЯ И РАСЧЕТОВ ---
 
 function switchTab(tab) {
     activeTab = tab;
@@ -423,23 +407,15 @@ function updateSettingsFromUI() {
         labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка час (нетто):' : 'Оклад брутто (zł):';
     }
 
-    saveSettingsToServer();
     setUnsaved();
     calculateStats();
 }
 
-function updateShiftsConfigFromUI() {
-    userSettings.shiftsConfig['1'].start = document.getElementById('cfgShift1Start').value;
-    userSettings.shiftsConfig['1'].end = document.getElementById('cfgShift1End').value;
-    
-    userSettings.shiftsConfig['2'].start = document.getElementById('cfgShift2Start').value;
-    userSettings.shiftsConfig['2'].end = document.getElementById('cfgShift2End').value;
-    
-    userSettings.shiftsConfig['3'].start = document.getElementById('cfgShift3Start').value;
-    userSettings.shiftsConfig['3'].end = document.getElementById('cfgShift3End').value;
-
-    saveSettingsToServer();
+function updateShift1ConfigFromUI() {
+    userSettings.shift1Start = document.getElementById('cfgShift1Start').value;
     setUnsaved();
+    // Обновляем визуальное отображение автоматически рассчитанных смен на экране настроек
+    showMainScreen();
 }
 
 function renderCalendarGrid() {
@@ -514,7 +490,8 @@ let currentModalShift = '1';
 
 function openDayModal(day) {
     selectedDayForModal = day;
-    const defaultShiftTime = userSettings.shiftsConfig['1'];
+    const shiftsConfig = getCalculatedShiftsConfig();
+    const defaultShiftTime = shiftsConfig['1'];
     const s = scheduleData[day] || { shift: '1', start: defaultShiftTime.start, end: defaultShiftTime.end };
     
     document.getElementById('modalTitle').innerText = `${day} ${monthNames[currentMonth]}`;
@@ -539,7 +516,8 @@ function selectModalShift(shiftType) {
     updateModalShiftButtons();
 
     if (shiftType !== 'none') {
-        const cfg = userSettings.shiftsConfig[shiftType];
+        const shiftsConfig = getCalculatedShiftsConfig();
+        const cfg = shiftsConfig[shiftType];
         if (cfg) {
             document.getElementById('modalStart').value = cfg.start;
             document.getElementById('modalEnd').value = cfg.end;
@@ -668,24 +646,15 @@ function calculateStats() {
 async function loadSettings() {
     if (!currentUser) return;
     try {
-        const res = await fetch(`/settings?userId=${currentUser.id}`);
+        const res = await fetch(`/api/settings?userId=${currentUser.id}`);
         const data = await res.json();
         if (data && data.user_id) {
             userSettings.calcType = data.calc_type || 'monthly';
-            userSettings.monthlyRate = data.monthly_rate || 5500;
-            userSettings.rate = data.rate || 25;
+            userSettings.monthlyRate = data.monthly_rate !== undefined ? data.monthly_rate : 5500;
+            userSettings.rate = data.rate !== undefined ? data.rate : 25;
             userSettings.bonus = data.bonus !== undefined ? data.bonus : 850;
-            userSettings.manualKantyna = data.manual_kantyna || 0;
-            
-            if (data.shifts_config) {
-                try {
-                    let parsedConfig = typeof data.shifts_config === 'string' ? JSON.parse(data.shifts_config) : data.shifts_config;
-                    userSettings.shiftsConfig = parsedConfig;
-                } catch (e) { console.error('Ошибка парсинга смен:', e); }
-            }
-
-            showMainScreen();
-            calculateStats();
+            userSettings.manualKantyna = data.manual_kantyna !== undefined ? data.manual_kantyna : 0;
+            userSettings.shift1Start = data.shift1_start || '06:00';
         }
     } catch (e) {
         console.error('Ошибка загрузки настроек:', e);
@@ -695,7 +664,7 @@ async function loadSettings() {
 async function saveSettingsToServer() {
     if (!currentUser) return;
     try {
-        await fetch('/settings', {
+        await fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -705,18 +674,19 @@ async function saveSettingsToServer() {
                 rate: userSettings.rate,
                 bonus: userSettings.bonus,
                 manualKantyna: userSettings.manualKantyna,
-                shiftsConfig: userSettings.shiftsConfig
+                shift1Start: userSettings.shift1Start
             })
         });
     } catch (e) {
         console.error('Ошибка сохранения настроек:', e);
+        throw e;
     }
 }
 
 async function loadShifts() {
     if (!currentUser) return;
     try {
-        const res = await fetch(`/shifts?userId=${currentUser.id}&year=${currentYear}&month=${currentMonth}`);
+        const res = await fetch(`/api/shifts?userId=${currentUser.id}&year=${currentYear}&month=${currentMonth}`);
         const data = await res.json();
         
         scheduleData = {};
@@ -745,7 +715,7 @@ async function saveAllData() {
     if (!currentUser) return;
     try {
         await saveSettingsToServer();
-        await fetch('/shifts', {
+        await fetch('/api/shifts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
