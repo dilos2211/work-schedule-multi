@@ -101,10 +101,29 @@ function logout() {
 }
 
 function showMainScreen() {
-    // Здесь предполагается, что разметка основного интерфейса уже есть в index.html.
-    // Если нужно выводить интерфейс динамически, добавьте его генерацию здесь.
+    document.body.innerHTML = `
+        <div class="app-container" style="padding: 20px; font-family: Arial, sans-serif;">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+                <h2>Управление сменами и зарплатой</h2>
+                <div>
+                    <span id="userEmailDisplay" style="margin-right: 15px; font-weight: bold;">${currentUser.email}</span>
+                    <button id="logoutBtn" class="btn-secondary" style="padding: 5px 15px; cursor: pointer;">Выйти</button>
+                </div>
+            </header>
+            <main>
+                <div id="calendarContainer">
+                    <h3>Календарь смен</h3>
+                    <div id="calendarView"></div>
+                </div>
+            </main>
+        </div>
+    `;
+
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.onclick = logout;
+
+    loadSettings();
+    loadShifts();
 }
 
 // --- РАБОТА С НАСТРОЙКАМИ ---
@@ -150,10 +169,8 @@ async function saveSettingsToServer() {
 }
 
 function updateSettingsUI() {
-    // Привязка значений к элементам формы настроек на странице, если они существуют
     const calcTypeEl = document.getElementById('calcType');
     if (calcTypeEl) calcTypeEl.value = userSettings.calcType;
-    // Аналогично для других полей настроек...
 }
 
 // --- РАБОТА СО СМЕНАМИ И КАЛЕНДАРЕМ ---
@@ -202,6 +219,5 @@ async function saveShiftsToServer() {
 }
 
 function renderCalendar() {
-    // Логика отрисовки календаря на клиенте
     console.log("Календарь обновлен для месяца:", currentMonth, currentYear);
 }
