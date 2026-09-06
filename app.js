@@ -77,7 +77,6 @@ function initApp() {
         showAuthScreen();
     } else {
         apiLoadSettings().then(() => {
-            // Восстанавливаем сохраненное в браузере начало смены, если сервер сбрасывает
             const savedShift1 = localStorage.getItem('shift1Start');
             if (savedShift1) {
                 userSettings.shift1Start = savedShift1;
@@ -100,7 +99,6 @@ function initApp() {
     }
 }
 
-// Глобальные обработчики для HTML (onclick="...")
 window.toggleTheme = function() {
     currentTheme = currentTheme === 'light' ? 'dark' : 'light';
     localStorage.setItem('app_theme', currentTheme);
@@ -204,7 +202,7 @@ window.updateShift1ConfigFromUI = function() {
     if (!inputVal) return;
 
     userSettings.shift1Start = inputVal;
-    localStorage.setItem('shift1Start', inputVal); // Сохраняем в память браузера
+    localStorage.setItem('shift1Start', inputVal);
     
     let [h, m] = inputVal.split(':').map(Number);
     let d2StartH = (h + 8) % 24;
@@ -279,10 +277,10 @@ function showMainScreen() {
                 </div>
                 
                 <div style="display: flex; gap: 3px;">
-                    <button onclick="toggleTheme()" style="background: ${c.badgeBg}; color: ${c.text}; border: 1px solid ${c.border}; padding: 6px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;" title="Тема">${currentTheme === 'dark' ? '🌙' : '☀️'}</button>
+                    <button onclick="toggleTheme()" style="background: ${c.badgeBg}; color: ${c.text}; border: 1px solid ${c.border}; padding: 6px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;" title="${t('tooltipTheme')}">${currentTheme === 'dark' ? '🌙' : '☀️'}</button>
                     <button onclick="toggleLanguage('pl')" style="background: ${lang === 'pl' ? c.accent : c.badgeBg}; color: ${lang === 'pl' ? '#fff' : c.text}; border: none; padding: 6px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer;">PL</button>
                     <button onclick="toggleLanguage('uk')" style="background: ${lang === 'uk' ? c.accent : c.badgeBg}; color: ${lang === 'uk' ? '#fff' : c.text}; border: none; padding: 6px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer;">UA</button>
-                    <button onclick="logout()" style="background: ${currentTheme === 'dark' ? '#7f1d1d' : '#fee2e2'}; color: #dc2626; border: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: 500;" title="Выйти">✕</button>
+                    <button onclick="logout()" style="background: ${currentTheme === 'dark' ? '#7f1d1d' : '#fee2e2'}; color: #dc2626; border: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: 500;" title="${t('tooltipLogout')}">✕</button>
                 </div>
             </div>
 
@@ -354,11 +352,11 @@ function showMainScreen() {
                 
                 <div style="background: ${c.cardBg}; border: 1px solid ${c.border}; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <div style="font-size: 12px; font-weight: bold; color: ${c.text}; margin-bottom: 2px;">Тема оформления</div>
-                        <div style="font-size: 11px; color: ${c.textSecondary};">${currentTheme === 'dark' ? 'Тёмная тема включена' : 'Светлая тема включена'}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: ${c.text}; margin-bottom: 2px;">${t('themeCardTitle')}</div>
+                        <div style="font-size: 11px; color: ${c.textSecondary};">${currentTheme === 'dark' ? t('themeDarkActive') : t('themeLightActive')}</div>
                     </div>
                     <button onclick="toggleTheme()" style="background: ${c.accent}; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;">
-                        ${currentTheme === 'dark' ? '🌙 Тёмная' : '☀️ Светлая'}
+                        ${currentTheme === 'dark' ? t('btnDarkText') : t('btnLightText')}
                     </button>
                 </div>
 
@@ -521,8 +519,10 @@ function renderCalendarGrid() {
             holidayHtml = `<div style="font-size: 7.5px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.1;" title="${holidayName}">${holidayName}</div>`;
         }
 
+        const tooltipTitle = holidayName ? (t('tooltipHoliday') + holidayName) : (isWeekend ? t('tooltipWeekend') : '');
+
         html += `
-            <div onclick="window.openDayModal(${day})" title="${holidayName ? 'Święto: ' + holidayName : (isWeekend ? 'Wolne (Weekend)' : '')}" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 5px; padding: 4px 2px; text-align: center; cursor: pointer; min-height: 52px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+            <div onclick="window.openDayModal(${day})" title="${tooltipTitle}" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 5px; padding: 4px 2px; text-align: center; cursor: pointer; min-height: 52px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
                 <div style="font-size: 11px; font-weight: bold; color: ${dayNumberColor};">${day}</div>
                 <div>
                     <div style="font-size: 8px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 3px; padding: 2px 1px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 1px;">${badgeText}</div>
@@ -618,7 +618,7 @@ window.recalculateModalHours = function() {
     let nadgH = Math.max(0, totalH - 8);
 
     document.getElementById('modalStatsInfo').innerText = 
-        `Всего: ${totalH}h | База: ${baseH}h | Nadg: ${nadgH}h`;
+        `${t('lblTotal')}: ${totalH}h | ${t('lblBase')}: ${baseH}h | ${t('lblNadg')}: ${nadgH}h`;
 };
 
 window.saveDayModal = function() {

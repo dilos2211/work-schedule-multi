@@ -42,7 +42,7 @@ export const translations = {
         autoScheduleTitle: "Harmonogram automatyczny:",
         saveSettingsBtn: "Zapisz ustawienia",
         
-        salaryViewTitle: "Szczegczóły kalkulacji wynagrodzenia",
+        salaryViewTitle: "Szczegóły kalkulacji wynagrodzenia",
         salaryViewDesc: "Tutaj wyświetlane są szczegółowe naliczenia godzinowe, dodatki za zmiany nocne oraz dni świąteczne zgodnie z Twoim harmonogramem.",
         
         modalQuickShift: "Szybki wybór zmiany:",
@@ -56,6 +56,20 @@ export const translations = {
         hours100Label: "Godziny +100%:",
         bonusZlLabel: "Dodatek (zł):",
         applyBtn: "Zastosuj",
+
+        // Дополнительные UI-тексты, вынесенные из app.js
+        themeCardTitle: "Wygląd",
+        themeDarkActive: "Ciemny motyw włączony",
+        themeLightActive: "Jasny motyw włączony",
+        btnDarkText: "🌙 Ciemny",
+        btnLightText: "☀️ Jasny",
+        tooltipTheme: "Motyw",
+        tooltipLogout: "Wyloguj",
+        lblTotal: "Razem",
+        lblBase: "Baza",
+        lblNadg: "Nadg",
+        tooltipHoliday: "Święto: ",
+        tooltipWeekend: "Wolne (Weekend)",
         
         daysOfWeek: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
         months: [
@@ -120,6 +134,20 @@ export const translations = {
         hours100Label: "Години +100%:",
         bonusZlLabel: "Доплата (zł):",
         applyBtn: "Застосувати",
+
+        // Дополнительные UI-тексты, вынесенные из app.js
+        themeCardTitle: "Тема оформлення",
+        themeDarkActive: "Темну тему увімкнено",
+        themeLightActive: "Світлу тему увімкнено",
+        btnDarkText: "🌙 Темна",
+        btnLightText: "☀️ Світла",
+        tooltipTheme: "Тема",
+        tooltipLogout: "Вийти",
+        lblTotal: "Всього",
+        lblBase: "База",
+        lblNadg: "Понаднорм",
+        tooltipHoliday: "Свято: ",
+        tooltipWeekend: "Вихідний (Вікенд)",
         
         daysOfWeek: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
         months: [
