@@ -583,10 +583,27 @@ async function loadSettings() {
                 calcType: data.calc_type || 'monthly',
                 monthlyRate: data.monthly_rate || 5500,
                 rate: data.rate || 25,
-                bonus: data.bonus || 850,
+                bonus: data.bonus !== undefined ? data.bonus : 850,
                 manualKantyna: data.manual_kantyna || 0
             };
+            
+            // Синхронизируем инпуты на экране с загруженными настройками
+            const calcTypeSelect = document.getElementById('calcType');
+            if (calcTypeSelect) calcTypeSelect.value = userSettings.calcType;
+
+            const rateInput = document.getElementById('inputRateValue');
+            if (rateInput) rateInput.value = userSettings.calcType === 'hourly' ? userSettings.rate : userSettings.monthlyRate;
+
+            const bonusInput = document.getElementById('inputBonus');
+            if (bonusInput) bonusInput.value = userSettings.bonus;
+
+            const labelElem = document.getElementById('labelRateName');
+            if (labelElem) {
+                labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка в час нетто (zł):' : 'Оклад брутто (zł):';
+            }
+
             showMainScreen();
+            calculateStats();
         }
     } catch (e) {
         console.error('Ошибка загрузки настроек:', e);
@@ -644,6 +661,7 @@ async function loadShifts() {
 async function saveAllData() {
     if (!currentUser) return;
     try {
+        await saveSettingsToServer(); // Принудительно сохраняем настройки (включая премию)
         await fetch('/shifts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -658,7 +676,7 @@ async function saveAllData() {
         updateSaveStatusUI();
         alert('Отчет успешно сохранен!');
     } catch (e) {
-        console.error('Ошибка сохранения смен:', e);
+        console.error('Ошибка сохранения отчета:', e);
         alert('Ошибка при сохранении отчета!');
     }
 }
