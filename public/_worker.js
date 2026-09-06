@@ -1,8 +1,13 @@
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const db = env.DB; // Наша привязанная база данных D1
+
+    // Заголовки для CORS (если нужно)
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     };
 
@@ -10,111 +15,106 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    const url = new URL(request.url);
-
-    if (url.pathname.startsWith("/api/shifts")) {
-      try {
-        // Создаем таблицу с поддержкой детальных полей для каждого дня
-        await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS reports (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            work_date TEXT,
-            shift_type TEXT,
-            start_time TEXT,
-            end_time TEXT,
-            total_hours REAL,
-            overtime_hours REAL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          )
-        `).run();
-
-        // 1. GET: Загрузка данных за конкретный месяц и год
-        if (request.method === "GET") {
-          const year = url.searchParams.get("year");
-          const month = url.searchParams.get("month");
-
-          let query = "SELECT work_date, shift_type, start_time, end_time, total_hours, overtime_hours FROM reports";
-          let stmt;
-
-          if (year && month !== null) {
-            // Формируем шаблон для поиска по дате, например "2026-08-%" (месяц в JS передается от 0 до 11, учтите это или передавайте в SQL строку)
-            const targetMonth = String(parseInt(month) + 1).padStart(2, '0');
-            const prefix = `${year}-${targetMonth}-`;
-            query += " WHERE work_date LIKE ?";
-            stmt = env.DB.prepare(query).bind(prefix + "%");
-          } else {
-            stmt = env.DB.prepare(query);
-          }
-
-          const { results } = await stmt.all();
-
-          return new Response(JSON.stringify(results), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+    try {
+      // 1. РЕГИСТРАЦИЯ
+      if (path === "/api/register" && request.method === "POST") {
+        const { email, password } = await request.json();
+        if (!email || !password) {
+          return Response.json({ success: false, error: "Заполните все поля" }, { status: 400, headers: corsHeaders });
         }
 
-        // 2. POST: Сохранение данных графика
-        if (request.method === "POST") {
-          const payload = await request.json();
-          const { year, month, scheduleData } = payload;
-
-          if (scheduleData) {
-            const targetMonthStr = String(parseInt(month) + 1).padStart(2, '0');
-
-            // Проходим по каждому дню месяца из расписания и сохраняем в базу
-            for (const [dayNum, data] of Object.entries(scheduleData)) {
-              const dayStr = String(dayNum).padStart(2, '0');
-              const workDate = `${year}-${targetMonthStr}-${dayStr}`;
-
-              // Проверяем, есть ли уже запись на этот день, чтобы обновить или вставить новую
-              const existing = await env.DB.prepare(
-                "SELECT id FROM reports WHERE work_date = ?"
-              ).bind(workDate).first();
-
-              if (existing) {
-                await env.DB.prepare(`
-                  UPDATE reports 
-                  SET shift_type = ?, start_time = ?, end_time = ?, total_hours = ?, overtime_hours = ?
-                  WHERE work_date = ?
-                `).bind(
-                  data.shift, 
-                  data.start, 
-                  data.end, 
-                  data.totalHours || 0, 
-                  data.overtime || 0, 
-                  workDate
-                ).run();
-              } else {
-                await env.DB.prepare(`
-                  INSERT INTO reports (work_date, shift_type, start_time, end_time, total_hours, overtime_hours)
-                  VALUES (?, ?, ?, ?, ?, ?)
-                `).bind(
-                  workDate, 
-                  data.shift, 
-                  data.start, 
-                  data.end, 
-                  data.totalHours || 0, 
-                  data.overtime || 0
-                ).run();
-              }
-            }
-          }
-
-          return new Response(JSON.stringify({ success: true, message: 'Данные успешно сохранены!' }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+        // Проверяем, есть ли уже такой यूजर
+        const existing = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
+        if (existing) {
+          return Response.json({ success: false, error: "Пользователь с таким email уже существует" }, { status: 400, headers: corsHeaders });
         }
 
-        return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+        // Сохраняем (в реальном проекте лучше хешировать, но для простоты сохраним как есть или через простую проверку)
+        const insertRes = await db.prepare("INSERT INTO users (email, password) VALUES (?, ?)").bind(email, password).run();
+        const newUser = await db.prepare("SELECT id, email FROM users WHERE email = ?").bind(email).first();
 
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
+        return Response.json({ success: true, user: newUser }, { headers: corsHeaders });
       }
-    }
 
-    return env.ASSETS.fetch(request);
+      // 2. ВХОД
+      if (path === "/api/login" && request.method === "POST") {
+        const { email, password } = await request.json();
+        const user = await db.prepare("SELECT * FROM users WHERE email = ? AND password = ?").bind(email, password).first();
+
+        if (!user) {
+          return Response.json({ success: false, error: "Неверный email или пароль" }, { status: 400, headers: corsHeaders });
+        }
+
+        return Response.json({ success: true, user: { id: user.id, email: user.email } }, { headers: corsHeaders });
+      }
+
+      // 3. ПОЛУЧЕНИЕ НАСТРОЕК
+      if (path === "/api/settings" && request.method === "GET") {
+        const userId = url.searchParams.get("userId");
+        const settings = await db.prepare("SELECT * FROM settings WHERE user_id = ?").bind(userId).first();
+        return Response.json(settings || {}, { headers: corsHeaders });
+      }
+
+      // 4. СОХРАНЕНИЕ НАСТРОЕК
+      if (path === "/api/settings" && request.method === "POST") {
+        const { userId, calcType, monthlyRate, rate, bonus, manualKantyna } = await request.json();
+        await db.prepare(`
+          INSERT INTO settings (user_id, calc_type, monthly_rate, rate, bonus, manual_kantyna)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT(user_id) DO UPDATE SET
+            calc_type = excluded.calc_type,
+            monthly_rate = excluded.monthly_rate,
+            rate = excluded.rate,
+            bonus = excluded.bonus,
+            manual_kantyna = excluded.manual_kantyna
+        `).bind(userId, calcType, monthlyRate, rate, bonus, manualKantyna).run();
+
+        return Response.json({ success: true }, { headers: corsHeaders });
+      }
+
+      // 5. ПОЛУЧЕНИЕ СМЕН
+      if (path === "/api/shifts" && request.method === "GET") {
+        const userId = url.searchParams.get("userId");
+        const year = url.searchParams.get("year");
+        const month = String(parseInt(url.searchParams.get("month")) + 1).padStart(2, '0');
+        const prefix = `${year}-${month}`;
+
+        const { results } = await db.prepare(
+          "SELECT * FROM shifts WHERE user_id = ? AND work_date LIKE ?"
+        ).bind(userId, `${prefix}%`).all();
+
+        return Response.json(results || [], { headers: corsHeaders });
+      }
+
+      // 6. СОХРАНЕНИЕ СМЕН
+      if (path === "/api/shifts" && request.method === "POST") {
+        const { userId, month, year, scheduleData } = await request.json();
+        const mStr = String(parseInt(month) + 1).padStart(2, '0');
+
+        // Удаляем старые записи за этот месяц для этого юзера, чтобы записать новые актуальные
+        for (const day in scheduleData) {
+          const dStr = String(day).padStart(2, '0');
+          const dateFull = `${year}-${mStr}-${dStr}`;
+          const s = scheduleData[day];
+
+          // Удаляем старую запись на этот день
+          await db.prepare("DELETE FROM shifts WHERE user_id = ? AND work_date = ?").bind(userId, dateFull).run();
+
+          // Если смена не пустая, сохраняем
+          if (s.shift && s.shift !== 'none') {
+            await db.prepare(`
+              INSERT INTO shifts (user_id, work_date, shift_type, start_time, end_time, total_hours, overtime_hours)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).bind(userId, dateFull, s.shift, s.start, s.end, s.totalHours, s.overtime).run();
+          }
+        }
+
+        return Response.json({ success: true }, { headers: corsHeaders });
+      }
+
+      return new Response("Not found", { status: 404, headers: corsHeaders });
+    } catch (err) {
+      return Response.json({ success: false, error: err.message }, { status: 500, headers: corsHeaders });
+    }
   }
 };
