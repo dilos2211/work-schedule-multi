@@ -553,69 +553,64 @@ window.saveDayModal = function() {
         };
     }
 
+    setUnsavedChanges(true);
     window.closeDayModal();
     renderCalendarGrid();
     calculateStats();
-    setUnsavedChanges(true);
     updateSaveStatusUI();
 };
 
-function calculateStats() {
-    let daysWorked = 0;
-    let totalHours = 0;
-    let totalOvertime = 0;
-    let calculatedMoney = 0;
-
-    const hourlyRate = userSettings.rate || 25;
-    const isHourly = userSettings.calcType === 'hourly';
-
-    for (let day in scheduleData) {
-        const s = scheduleData[day];
-        if (s && s.shift && s.shift !== 'none') {
-            daysWorked++;
-            const tH = (s.totalHours || 8);
-            totalHours += tH;
-            totalOvertime += (s.overtime || 0);
-
-            if (isHourly) {
-                calculatedMoney += tH * hourlyRate;
-                calculatedMoney += (s.hours50 || 0) * (hourlyRate * 1.5);
-                calculatedMoney += (s.hours100 || 0) * (hourlyRate * 2.0);
-            }
-            calculatedMoney += (s.bonusZl || 0);
-        }
-    }
-
-    const baseHours = Math.max(0, totalHours - totalOvertime);
-
-    document.getElementById('statDays').innerText = daysWorked;
-    document.getElementById('statBaseHours').innerText = `${baseHours.toFixed(1)} ч`;
-    document.getElementById('statOvertime').innerText = `${totalOvertime.toFixed(1)} ч`;
-    document.getElementById('statNight').innerText = `0.0 ч`;
-    document.getElementById('statTotalHours').innerText = `${totalHours.toFixed(1)} ч`;
-
-    let totalMoney = 0;
-    if (isHourly) {
-        totalMoney = calculatedMoney + userSettings.bonus;
-    } else {
-        totalMoney = userSettings.monthlyRate + userSettings.bonus + calculatedMoney;
-    }
-
-    document.getElementById('statTotalMoney').innerText = `${totalMoney.toFixed(2)} zł`;
-}
-
-window.handleSaveReport = async function() {
-    await apiSaveAll(() => {
+window.handleSaveReport = function() {
+    apiSaveAll(() => {
         setUnsavedChanges(false);
         updateSaveStatusUI();
-    }, () => {
-        const badge = document.getElementById('saveStatusBadge') || document.getElementById('saveStatusBadgeSettings');
-        if (badge) {
-            badge.style.display = 'block';
-            badge.style.background = '#fee2e2';
-            badge.style.color = '#dc2626';
-            badge.style.border = '1px solid #fca5a5';
-            badge.innerText = '❌ Ошибка при сохранении!';
-        }
     });
 };
+
+function calculateStats() {
+    let totalDays = 0;
+    let totalBaseH = 0;
+    let totalOvertimeH = 0;
+    let totalNightH = 0;
+    let totalHoursAll = 0;
+    let calculatedMoney = 0;
+
+    Object.values(scheduleData).forEach(s => {
+        if (s.shift && s.shift !== 'none') {
+            totalDays++;
+            const th = s.totalHours || 0;
+            totalHoursAll += th;
+            const ot = s.overtime || 0;
+            totalOvertimeH += ot;
+            totalBaseH += Math.max(0, th - ot);
+        }
+    });
+
+    if (userSettings.calcType === 'hourly') {
+        calculatedMoney = totalHoursAll * (userSettings.rate || 0);
+    } else {
+        calculatedMoney = (userSettings.monthlyRate || 0);
+    }
+
+    calculatedMoney += (userSettings.bonus || 0);
+
+    Object.values(scheduleData).forEach(s => {
+        if (s.bonusZl) {
+            calculatedMoney += s.bonusZl;
+        }
+    });
+
+    const elDays = document.getElementById('statDays');
+    const elBase = document.getElementById('statBaseHours');
+    const elOver = document.getElementById('statOvertime');
+    const elNight = document.getElementById('statNight');
+    const elTotalH = document.getElementById('statTotalHours');
+    const elTotalM = document.getElementById('statTotalMoney');
+
+    if (elDays) elDays.innerText = totalDays;
+    if (elBase) elBase.innerText = `${totalBaseH.toFixed(1)} ч`;
+    if (elOver) elOver.innerText = `${totalOvertimeH.toFixed(1)} ч`;
+    if (elNight) elNight.innerText = `${totalNightH.toFixed(1)} ч`;
+    if (elTotalH) elTotalH.innerText = `${totalHoursAll.toFixed(1)} ч`;
+    if (elTotalM) elTotalM.innerText = `${calculatedMoney.toFixed(2)} zł`;
+}
