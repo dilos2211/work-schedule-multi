@@ -707,26 +707,34 @@ window.handleSaveReport = function() {
 
 function calculateStats() {
     let totalDays = 0;
-    let totalBaseH = 0;
-    let totalOvertimeH = 0;
-    let totalNightH = 0;
     let totalHoursAll = 0;
     let calculatedMoney = 0;
 
+    // Считаем общее количество отработанных дней и часов за месяц
     Object.values(scheduleData).forEach(s => {
         if (s.shift && s.shift !== 'none') {
             totalDays++;
-            const th = s.totalHours || 0;
-            totalHoursAll += th;
-            
-            // Всё, что превышает 8 часов за день (включая работу в субботу/воскресенье), идет в переработку
-            const ot = Math.max(0, th - 8);
-            totalOvertimeH += ot;
-            
-            // Базовые часы за день не могут превышать 8
-            totalBaseH += Math.min(th, 8);
+            totalHoursAll += (s.totalHours || 0);
         }
     });
+
+    // Автоматический расчет стандартной нормы часов месяца (Пн-Пт без праздников * 8)
+    let standardMonthHours = 0;
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+        let dateObj = new Date(currentYear, currentMonth, day);
+        let dayOfWeek = dateObj.getDay();
+        let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        let holidayName = getHolidayName(currentYear, currentMonth, day);
+        if (!isWeekend && !holidayName) {
+            standardMonthHours += 8;
+        }
+    }
+
+    // Базовые часы не могут превышать месячную норму, а всё сверху — это наддурочные (переработка)
+    let totalBaseH = Math.min(totalHoursAll, standardMonthHours);
+    let totalOvertimeH = Math.max(0, totalHoursAll - standardMonthHours);
+    let totalNightH = 0;
 
     if (userSettings.calcType === 'hourly') {
         calculatedMoney = totalHoursAll * (userSettings.rate || 0);
