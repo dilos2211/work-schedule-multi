@@ -188,7 +188,19 @@ window.updateSettingsFromUI = function() {
 };
 
 window.updateShift1ConfigFromUI = function() {
-    userSettings.shift1Start = document.getElementById('cfgShift1Start').value;
+    const inputVal = document.getElementById('cfgShift1Start').value;
+    if (!inputVal) return;
+
+    userSettings.shift1Start = inputVal;
+    
+    let [h, m] = inputVal.split(':').map(Number);
+    let d2StartH = (h + 8) % 24;
+    let d3StartH = (h + 16) % 24;
+    let formatTime = (num) => String(num).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    
+    userSettings.shift2Start = formatTime(d2StartH);
+    userSettings.shift3Start = formatTime(d3StartH);
+
     setUnsavedChanges(true);
     updateSaveStatusUI();
     showMainScreen();
