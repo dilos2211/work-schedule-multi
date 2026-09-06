@@ -11,9 +11,8 @@ export default {
     }
 
     try {
-      // Проверяем, подключена ли база данных
       if (!env.DB) {
-        return new Response(JSON.stringify({ success: false, error: "Ошибка сервера: База данных D1 не привязана к воркеру в Cloudflare!" }), {
+        return new Response(JSON.stringify({ success: false, error: "Ошибка сервера: База данных D1 не привязана в Cloudflare!" }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
@@ -23,7 +22,7 @@ export default {
       const db = env.DB;
 
       // 1. РЕГИСТРАЦИЯ
-      if (path.includes("/api/register") && request.method === "POST") {
+      if (path.includes("/register") && request.method === "POST") {
         let body;
         try {
           body = await request.json();
@@ -58,7 +57,7 @@ export default {
       }
 
       // 2. ВХОД
-      if (path.includes("/api/login") && request.method === "POST") {
+      if (path.includes("/login") && request.method === "POST") {
         let body = await request.json();
         const user = await db.prepare("SELECT * FROM users WHERE email = ? AND password = ?").bind(body.email, body.password).first();
 
@@ -74,7 +73,7 @@ export default {
       }
 
       // 3. ПОЛУЧЕНИЕ НАСТРОЕК
-      if (path.includes("/api/settings") && request.method === "GET") {
+      if (path.includes("/settings") && request.method === "GET") {
         const userId = url.searchParams.get("userId");
         const settings = await db.prepare("SELECT * FROM settings WHERE user_id = ?").bind(userId).first();
         return new Response(JSON.stringify(settings || {}), { 
@@ -83,7 +82,7 @@ export default {
       }
 
       // 4. СОХРАНЕНИЕ НАСТРОЕК
-      if (path.includes("/api/settings") && request.method === "POST") {
+      if (path.includes("/settings") && request.method === "POST") {
         let body = await request.json();
         await db.prepare(`
           INSERT INTO settings (user_id, calc_type, monthly_rate, rate, bonus, manual_kantyna)
@@ -102,7 +101,7 @@ export default {
       }
 
       // 5. ПОЛУЧЕНИЕ СМЕН
-      if (path.includes("/api/shifts") && request.method === "GET") {
+      if (path.includes("/shifts") && request.method === "GET") {
         const userId = url.searchParams.get("userId");
         const year = url.searchParams.get("year");
         const month = String(parseInt(url.searchParams.get("month")) + 1).padStart(2, '0');
@@ -118,7 +117,7 @@ export default {
       }
 
       // 6. СОХРАНЕНИЕ СМЕН
-      if (path.includes("/api/shifts") && request.method === "POST") {
+      if (path.includes("/shifts") && request.method === "POST") {
         let body = await request.json();
         const mStr = String(parseInt(body.month) + 1).padStart(2, '0');
         const scheduleData = body.scheduleData;
