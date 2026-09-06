@@ -1,5 +1,3 @@
-// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js) ---
-
 let currentUser = JSON.parse(localStorage.getItem('work_user')) || null;
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
@@ -14,7 +12,7 @@ let userSettings = {
     rate: 25,
     bonus: 850,
     manualKantyna: 0,
-    shift1Start: '06:00' // Базовая точка для расчета всех смен
+    shift1Start: '06:00'
 };
 
 const monthNames = [
@@ -73,7 +71,6 @@ function getHolidayName(year, month, day) {
     return found ? found.name : null;
 }
 
-// Вспомогательные функции расчета времени смен
 function addHoursToTime(timeStr, hoursToAdd) {
     let [h, m] = timeStr.split(':').map(Number);
     let totalM = h * 60 + m + hoursToAdd * 60;
@@ -213,7 +210,6 @@ function showMainScreen() {
     document.body.innerHTML = `
         <div class="main-wrapper" style="width: 100%; max-width: 480px; margin: 0 auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 10px; box-sizing: border-box; min-height: 100vh;">
             
-            <!-- Навигационные вкладки -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 4px;">
                 <div style="display: flex; background: #f4f4f5; padding: 3px; border-radius: 8px; flex-grow: 1; justify-content: space-around;">
                     <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'calendar' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; flex: 1;">📅 Календарь</button>
@@ -223,7 +219,6 @@ function showMainScreen() {
                 <button onclick="logout()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 500; white-space: nowrap;">Выйти</button>
             </div>
 
-            <!-- Вкладка: Календарь -->
             <div id="viewCalendar" style="display: ${activeTab === 'calendar' ? 'block' : 'none'};">
                 
                 <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 12px; display: grid; grid-template-columns: 2fr 1fr; gap: 8px; box-sizing: border-box;">
@@ -263,10 +258,8 @@ function showMainScreen() {
                     </div>
                 </div>
 
-                <!-- Сетка календаря -->
                 <div id="calendarGrid" style="background: #fafafa; border: 1px solid #e4e4e7; padding: 8px; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box;"></div>
 
-                <!-- Статистика -->
                 <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; box-sizing: border-box;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: #71717a;">Отработано дней:</span> <strong id="statDays">0</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: #71717a;">Базовые часы:</span> <strong id="statBaseHours">0 ч</strong></div>
@@ -276,19 +269,16 @@ function showMainScreen() {
                     <div style="display: flex; justify-content: space-between; font-size: 15px; border-top: 1px solid #e4e4e7; padding-top: 5px; margin-top: 5px; color: #2563eb;"><span>Итого (${isHourly ? 'нетто' : 'брутто'}):</span> <strong id="statTotalMoney">0.00 zł</strong></div>
                 </div>
 
-                <!-- Плашка статуса сохранения -->
                 <div id="saveStatusBadge" style="padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; text-align: center; margin-bottom: 10px; display: none; box-sizing: border-box;"></div>
 
                 <button onclick="saveAllData();" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; box-sizing: border-box; margin-bottom: 20px;">Сохранить отчет</button>
             </div>
 
-            <!-- Вкладка: Зарплата -->
             <div id="viewSalary" style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; box-sizing: border-box;">
                 <h3 style="margin-top: 0; color: #18181b; font-size: 16px;">Детализация расчета</h3>
                 <p style="color: #71717a; font-size: 13px; line-height: 1.4;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни согласно вашему графику.</p>
             </div>
 
-            <!-- Вкладка: Настройки -->
             <div id="viewSettings" style="display: ${activeTab === 'settings' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; box-sizing: border-box;">
                 <h3 style="margin-top: 0; color: #18181b; font-size: 16px; margin-bottom: 10px;">⏰ Настройка времени смен</h3>
                 <p style="color: #71717a; font-size: 12px; line-height: 1.4; margin-bottom: 15px;">Укажите время начала 1-й смены. Остальные смены рассчитаются автоматически (+8 часов каждая).</p>
@@ -312,39 +302,53 @@ function showMainScreen() {
 
         </div>
 
-        <!-- Модальное окно редактирования дня -->
         <div id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; box-sizing: border-box; padding: 15px;">
-            <div style="background: #ffffff; padding: 15px; border-radius: 12px; width: 100%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b; position: relative; box-sizing: border-box;">
+            <div style="background: #ffffff; padding: 15px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b; position: relative; box-sizing: border-box; max-height: 90vh; overflow-y: auto;">
                 
                 <button onclick="closeDayModal()" style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; font-size: 18px; cursor: pointer; color: #71717a; padding: 4px;">✕</button>
 
-                <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 12px; font-size: 16px; font-weight: bold;">1 Сентябрь</h3>
+                <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 10px; font-size: 16px; font-weight: bold;">1 Сентябрь</h3>
                 
-                <div style="font-size: 12px; color: #71717a; margin-bottom: 6px; font-weight: 500;">Быстрый выбор смены:</div>
+                <div style="font-size: 11px; color: #71717a; margin-bottom: 4px; font-weight: 500;">Быстрый выбор смены:</div>
                 
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 12px;">
-                    <button type="button" id="btnShift1" onclick="selectModalShift('1')" style="padding: 8px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">1 смена</button>
-                    <button type="button" id="btnShift2" onclick="selectModalShift('2')" style="padding: 8px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">2 смена</button>
-                    <button type="button" id="btnShift3" onclick="selectModalShift('3')" style="padding: 8px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">3 смена</button>
-                    <button type="button" id="btnShiftNone" onclick="selectModalShift('none')" style="padding: 8px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #71717a; font-size: 10px; font-weight: bold; cursor: pointer;">Выходной</button>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 10px;">
+                    <button type="button" id="btnShift1" onclick="selectModalShift('1')" style="padding: 6px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">1 смена</button>
+                    <button type="button" id="btnShift2" onclick="selectModalShift('2')" style="padding: 6px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">2 смена</button>
+                    <button type="button" id="btnShift3" onclick="selectModalShift('3')" style="padding: 6px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">3 смена</button>
+                    <button type="button" id="btnShiftNone" onclick="selectModalShift('none')" style="padding: 6px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #71717a; font-size: 10px; font-weight: bold; cursor: pointer;">Выходной</button>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
                     <div>
-                        <label style="font-size: 11px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;">Начало:</label>
-                        <input type="time" id="modalStart" value="06:00" onchange="recalculateModalHours()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
+                        <label style="font-size: 11px; color: #71717a; font-weight: 500; display: block; margin-bottom: 2px;">Начало:</label>
+                        <input type="time" id="modalStart" value="06:00" onchange="recalculateModalHours()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
                     </div>
                     <div>
-                        <label style="font-size: 11px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;">Конец:</label>
-                        <input type="time" id="modalEnd" value="14:00" onchange="recalculateModalHours()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
+                        <label style="font-size: 11px; color: #71717a; font-weight: 500; display: block; margin-bottom: 2px;">Конец:</label>
+                        <input type="time" id="modalEnd" value="14:00" onchange="recalculateModalHours()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
                     </div>
                 </div>
 
-                <div id="modalStatsInfo" style="background: #f4f4f5; padding: 8px; border-radius: 6px; font-size: 11px; text-align: center; color: #3f3f46; margin-bottom: 15px; font-weight: 500;">
-                    Всего: 8h | База: 8h | Nadg: 0h | Noc: 0.0h
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+                    <div>
+                        <label style="font-size: 10px; color: #71717a; font-weight: 500; display: block; margin-bottom: 2px;">Часы +50%:</label>
+                        <input type="number" step="0.5" id="modalHours50" value="0" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: #71717a; font-weight: 500; display: block; margin-bottom: 2px;">Часы +100%:</label>
+                        <input type="number" step="0.5" id="modalHours100" value="0" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: #71717a; font-weight: 500; display: block; margin-bottom: 2px;">Доплата (zł):</label>
+                        <input type="number" step="1" id="modalBonusZl" value="0" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+                    </div>
                 </div>
 
-                <button onclick="saveDayModal()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; box-sizing: border-box;">Применить</button>
+                <div id="modalStatsInfo" style="background: #f4f4f5; padding: 6px; border-radius: 6px; font-size: 11px; text-align: center; color: #3f3f46; margin-bottom: 10px; font-weight: 500;">
+                    Всего: 8h | База: 8h | Nadg: 0h
+                </div>
+
+                <button onclick="saveDayModal()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; box-sizing: border-box;">Применить</button>
             </div>
         </div>
     `;
@@ -414,7 +418,6 @@ function updateSettingsFromUI() {
 function updateShift1ConfigFromUI() {
     userSettings.shift1Start = document.getElementById('cfgShift1Start').value;
     setUnsaved();
-    // Обновляем визуальное отображение автоматически рассчитанных смен на экране настроек
     showMainScreen();
 }
 
@@ -492,13 +495,16 @@ function openDayModal(day) {
     selectedDayForModal = day;
     const shiftsConfig = getCalculatedShiftsConfig();
     const defaultShiftTime = shiftsConfig['1'];
-    const s = scheduleData[day] || { shift: '1', start: defaultShiftTime.start, end: defaultShiftTime.end };
+    const s = scheduleData[day] || { shift: '1', start: defaultShiftTime.start, end: defaultShiftTime.end, hours50: 0, hours100: 0, bonusZl: 0 };
     
     document.getElementById('modalTitle').innerText = `${day} ${monthNames[currentMonth]}`;
     currentModalShift = s.shift || '1';
     
     document.getElementById('modalStart').value = s.start || defaultShiftTime.start;
     document.getElementById('modalEnd').value = s.end || defaultShiftTime.end;
+    document.getElementById('modalHours50').value = s.hours50 || 0;
+    document.getElementById('modalHours100').value = s.hours100 || 0;
+    document.getElementById('modalBonusZl').value = s.bonusZl || 0;
     
     updateModalShiftButtons();
     recalculateModalHours();
@@ -560,20 +566,11 @@ function recalculateModalHours() {
 
     let diffMinutes = endMinutes - startMinutes;
     let totalH = diffMinutes / 60;
-    
     let baseH = Math.min(totalH, 8);
     let nadgH = Math.max(0, totalH - 8);
 
-    let nightH = 0;
-    for (let m = startMinutes; m < endMinutes; m += 30) {
-        let hourOfDay = Math.floor((m % (24 * 60)) / 60);
-        if (hourOfDay >= 22 || hourOfDay < 6) {
-            nightH += 0.5;
-        }
-    }
-
     document.getElementById('modalStatsInfo').innerText = 
-        `Всего: ${totalH}h | База: ${baseH}h | Nadg: ${nadgH}h | Noc: ${nightH.toFixed(1)}h`;
+        `Всего: ${totalH}h | База: ${baseH}h | Nadg: ${nadgH}h`;
 }
 
 function saveDayModal() {
@@ -581,6 +578,9 @@ function saveDayModal() {
     
     const startStr = document.getElementById('modalStart').value;
     const endStr = document.getElementById('modalEnd').value;
+    const h50 = parseFloat(document.getElementById('modalHours50').value) || 0;
+    const h100 = parseFloat(document.getElementById('modalHours100').value) || 0;
+    const bZl = parseFloat(document.getElementById('modalBonusZl').value) || 0;
 
     let [startH, startM] = startStr.split(':').map(Number);
     let [endH, endM] = endStr.split(':').map(Number);
@@ -591,7 +591,7 @@ function saveDayModal() {
     let totalH = (endMinutes - startMinutes) / 60;
     let nadgH = Math.max(0, totalH - 8);
 
-    if (currentModalShift === 'none') {
+    if (currentModalShift === 'none' && totalH === 0 && h50 === 0 && h100 === 0 && bZl === 0) {
         delete scheduleData[selectedDayForModal];
     } else {
         scheduleData[selectedDayForModal] = {
@@ -599,7 +599,10 @@ function saveDayModal() {
             start: startStr,
             end: endStr,
             totalHours: totalH,
-            overtime: nadgH
+            overtime: nadgH,
+            hours50: h50,
+            hours100: h100,
+            bonusZl: bZl
         };
     }
 
@@ -613,13 +616,25 @@ function calculateStats() {
     let daysWorked = 0;
     let totalHours = 0;
     let totalOvertime = 0;
+    let calculatedMoney = 0;
+
+    const hourlyRate = userSettings.rate || 25;
+    const isHourly = userSettings.calcType === 'hourly';
 
     for (let day in scheduleData) {
         const s = scheduleData[day];
         if (s && s.shift && s.shift !== 'none') {
             daysWorked++;
-            totalHours += (s.totalHours || 8);
+            const tH = (s.totalHours || 8);
+            totalHours += tH;
             totalOvertime += (s.overtime || 0);
+
+            if (isHourly) {
+                calculatedMoney += tH * hourlyRate;
+                calculatedMoney += (s.hours50 || 0) * (hourlyRate * 1.5);
+                calculatedMoney += (s.hours100 || 0) * (hourlyRate * 2.0);
+            }
+            calculatedMoney += (s.bonusZl || 0);
         }
     }
 
@@ -632,10 +647,10 @@ function calculateStats() {
     document.getElementById('statTotalHours').innerText = `${totalHours.toFixed(1)} ч`;
 
     let totalMoney = 0;
-    if (userSettings.calcType === 'hourly') {
-        totalMoney = (totalHours * userSettings.rate) + userSettings.bonus;
+    if (isHourly) {
+        totalMoney = calculatedMoney + userSettings.bonus;
     } else {
-        totalMoney = userSettings.monthlyRate + userSettings.bonus;
+        totalMoney = userSettings.monthlyRate + userSettings.bonus + calculatedMoney;
     }
 
     document.getElementById('statTotalMoney').innerText = `${totalMoney.toFixed(2)} zł`;
@@ -698,7 +713,10 @@ async function loadShifts() {
                     start: item.start_time,
                     end: item.end_time,
                     totalHours: item.total_hours,
-                    overtime: item.overtime_hours
+                    overtime: item.overtime_hours,
+                    hours50: item.hours_50 || 0,
+                    hours100: item.hours_100 || 0,
+                    bonusZl: item.bonus_zl || 0
                 };
             });
         }

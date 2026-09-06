@@ -6,9 +6,9 @@ const bcrypt = require('bcryptjs'); // Для безопасного хэшир�
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middleware (статические файлы отдаются из корня, где лежит app.js)
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
 
 // Подключение к локальной базе данных SQLite
 const dbPath = path.join(__dirname, 'database.sqlite');
@@ -45,6 +45,9 @@ function initDb() {
         end_time TEXT,
         total_hours REAL,
         overtime_hours REAL,
+        hours_50 REAL DEFAULT 0,
+        hours_100 REAL DEFAULT 0,
+        bonus_zl REAL DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         UNIQUE(user_id, work_date)
       )
@@ -91,7 +94,6 @@ app.post('/api/register', async (req, res) => {
         }
 
         const userId = this.lastID;
-        // Создаем дефолтные настройки для нового пользователя
         db.run('INSERT INTO user_settings (user_id, shift1_start) VALUES (?, ?)', [userId, '06:00']);
 
         res.json({ success: true, user: { id: userId, email } });
@@ -176,7 +178,7 @@ app.get('/api/shifts', (req, res) => {
 
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-  let query = "SELECT work_date, shift_type, start_time, end_time, total_hours, overtime_hours FROM reports WHERE user_id = ?";
+  let query = "SELECT work_date, shift_type, start_time, end_time, total_hours, overtime_hours, hours_50, hours_100, bonus_zl FROM reports WHERE user_id = ?";
   let params = [userId];
 
   if (year && month !== undefined) {
@@ -207,13 +209,13 @@ app.post('/api/shifts', (req, res) => {
 
     const stmtUpdate = db.prepare(`
       UPDATE reports 
-      SET shift_type = ?, start_time = ?, end_time = ?, total_hours = ?, overtime_hours = ?
+      SET shift_type = ?, start_time = ?, end_time = ?, total_hours = ?, overtime_hours = ?, hours_50 = ?, hours_100 = ?, bonus_zl = ?
       WHERE user_id = ? AND work_date = ?
     `);
 
     const stmtInsert = db.prepare(`
-      INSERT INTO reports (user_id, work_date, shift_type, start_time, end_time, total_hours, overtime_hours)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO reports (user_id, work_date, shift_type, start_time, end_time, total_hours, overtime_hours, hours_50, hours_100, bonus_zl)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const [dayNum, data] of Object.entries(scheduleData)) {
@@ -228,13 +230,15 @@ app.post('/api/shifts', (req, res) => {
             stmtUpdate.run(
               data.shift, data.start, data.end, 
               data.totalHours || 0, data.overtime || 0, 
+              data.hours50 || 0, data.hours100 || 0, data.bonusZl || 0,
               userId, workDate
             );
           } else {
             stmtInsert.run(
               userId, workDate, 
               data.shift, data.start, data.end, 
-              data.totalHours || 0, data.overtime || 0
+              data.totalHours || 0, data.overtime || 0,
+              data.hours50 || 0, data.hours100 || 0, data.bonusZl || 0
             );
           }
         }
