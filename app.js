@@ -1,4 +1,4 @@
-import { t, getLang, setLang } from './translations.js';
+import { t, getLang, setLang, translations } from './translations.js';
 import { 
     currentUser, currentYear, currentMonth, scheduleData, activeTab, 
     selectedDayForModal, hasUnsavedChanges, currentModalShift, isRegisterMode,
@@ -13,14 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initApp() {
-    let metaViewport = document.querySelector('meta[name=viewport]');
-    if (!metaViewport) {
-        metaViewport = document.createElement('meta');
-        metaViewport.name = 'viewport';
-        document.head.appendChild(metaViewport);
-    }
-    metaViewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-
     if (!currentUser) {
         showAuthScreen();
     } else {
@@ -36,7 +28,7 @@ function initApp() {
     }
 }
 
-// Делаем функции доступными глобально для вызова из HTML (onclick="...")
+// Глобальные обработчики для HTML (onclick="...")
 window.toggleLanguage = function(lang) {
     setLang(lang);
     if (!currentUser) {
@@ -134,13 +126,12 @@ window.updateShift1ConfigFromUI = function() {
 
 function showAuthScreen() {
     const lang = getLang();
-    document.body.style.backgroundColor = "#f4f4f5";
-    document.body.style.margin = "0";
-    document.body.style.padding = "10px";
-    document.body.style.boxSizing = "border-box";
+    const appContainer = document.getElementById('app');
     
-    document.body.innerHTML = `
-        <div class="auth-container" style="display: flex; justify-content: center; align-items: center; min-height: 95vh;">
+    document.body.style.backgroundColor = "#f4f4f5";
+    
+    appContainer.innerHTML = `
+        <div class="auth-container" style="display: flex; justify-content: center; align-items: center; min-height: 95vh; padding: 10px; box-sizing: border-box;">
             <div class="auth-card" style="background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; color: #18181b; box-sizing: border-box;">
                 
                 <div style="display: flex; justify-content: flex-end; gap: 5px; margin-bottom: 15px;">
@@ -175,12 +166,11 @@ function showMainScreen() {
     const isHourly = userSettings.calcType === 'hourly';
     const shifts = getCalculatedShiftsConfig();
     const monthNames = translations[lang].months;
+    const appContainer = document.getElementById('app');
 
     document.body.style.backgroundColor = "#f4f4f5";
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
 
-    document.body.innerHTML = `
+    appContainer.innerHTML = `
         <div style="width: 100%; max-width: 480px; margin: 0 auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 10px; box-sizing: border-box; min-height: 100vh;">
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 4px;">
