@@ -210,6 +210,7 @@ function showMainScreen() {
     document.body.innerHTML = `
         <div class="main-wrapper" style="width: 100%; max-width: 480px; margin: 0 auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 10px; box-sizing: border-box; min-height: 100vh;">
             
+            <!-- Навигационные вкладки -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 4px;">
                 <div style="display: flex; background: #f4f4f5; padding: 3px; border-radius: 8px; flex-grow: 1; justify-content: space-around;">
                     <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'calendar' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; flex: 1;">📅 Календарь</button>
@@ -219,6 +220,7 @@ function showMainScreen() {
                 <button onclick="logout()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 500; white-space: nowrap;">Выйти</button>
             </div>
 
+            <!-- Вкладка: Календарь -->
             <div id="viewCalendar" style="display: ${activeTab === 'calendar' ? 'block' : 'none'};">
                 
                 <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 12px; display: grid; grid-template-columns: 2fr 1fr; gap: 8px; box-sizing: border-box;">
@@ -258,8 +260,10 @@ function showMainScreen() {
                     </div>
                 </div>
 
+                <!-- Сетка календаря -->
                 <div id="calendarGrid" style="background: #fafafa; border: 1px solid #e4e4e7; padding: 8px; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box;"></div>
 
+                <!-- Статистика -->
                 <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; box-sizing: border-box;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: #71717a;">Отработано дней:</span> <strong id="statDays">0</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: #71717a;">Базовые часы:</span> <strong id="statBaseHours">0 ч</strong></div>
@@ -269,16 +273,19 @@ function showMainScreen() {
                     <div style="display: flex; justify-content: space-between; font-size: 15px; border-top: 1px solid #e4e4e7; padding-top: 5px; margin-top: 5px; color: #2563eb;"><span>Итого (${isHourly ? 'нетто' : 'брутто'}):</span> <strong id="statTotalMoney">0.00 zł</strong></div>
                 </div>
 
+                <!-- Плашка статуса сохранения -->
                 <div id="saveStatusBadge" style="padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; text-align: center; margin-bottom: 10px; display: none; box-sizing: border-box;"></div>
 
                 <button onclick="saveAllData();" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; box-sizing: border-box; margin-bottom: 20px;">Сохранить отчет</button>
             </div>
 
+            <!-- Вкладка: Зарплата -->
             <div id="viewSalary" style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; box-sizing: border-box;">
                 <h3 style="margin-top: 0; color: #18181b; font-size: 16px;">Детализация расчета</h3>
                 <p style="color: #71717a; font-size: 13px; line-height: 1.4;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни согласно вашему графику.</p>
             </div>
 
+            <!-- Вкладка: Настройки -->
             <div id="viewSettings" style="display: ${activeTab === 'settings' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; box-sizing: border-box;">
                 <h3 style="margin-top: 0; color: #18181b; font-size: 16px; margin-bottom: 10px;">⏰ Настройка времени смен</h3>
                 <p style="color: #71717a; font-size: 12px; line-height: 1.4; margin-bottom: 15px;">Укажите время начала 1-й смены. Остальные смены рассчитаются автоматически (+8 часов каждая).</p>
@@ -302,6 +309,7 @@ function showMainScreen() {
 
         </div>
 
+        <!-- Модальное окно редактирования дня -->
         <div id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; box-sizing: border-box; padding: 15px;">
             <div style="background: #ffffff; padding: 15px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b; position: relative; box-sizing: border-box; max-height: 90vh; overflow-y: auto;">
                 
@@ -329,6 +337,7 @@ function showMainScreen() {
                     </div>
                 </div>
 
+                <!-- Поля для доплат и надбавок -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px;">
                     <div>
                         <label style="font-size: 10px; color: #71717a; font-weight: 500; display: block; margin-bottom: 2px;">Часы +50%:</label>
@@ -457,15 +466,23 @@ function renderCalendarGrid() {
         let borderStyle = '#d4d4d8';
         let badgeBg = '#f4f4f5';
         let badgeColor = '#71717a';
-        let badgeText = 'выходной';
+        let badgeText = '-';
         let dayNumberColor = '#18181b';
 
         if (s.shift === '1') {
-            bgStyle = '#eff6ff'; borderStyle = '#bfdbfe'; badgeBg = '#dbeafe'; badgeColor = '#1d4ed8'; badgeText = '1 см';
+            bgStyle = '#eff6ff'; borderStyle = '#bfdbfe'; badgeBg = '#dbeafe'; badgeColor = '#1d4ed8'; 
+            badgeText = `${s.totalHours || 8}h`;
         } else if (s.shift === '2') {
-            bgStyle = '#fff7ed'; borderStyle = '#fed7aa'; badgeBg = '#ffedd5'; badgeColor = '#c2410c'; badgeText = '2 см';
+            bgStyle = '#fff7ed'; borderStyle = '#fed7aa'; badgeBg = '#ffedd5'; badgeColor = '#c2410c'; 
+            badgeText = `${s.totalHours || 8}h`;
         } else if (s.shift === '3') {
-            bgStyle = '#f5f3ff'; borderStyle = '#ddd6fe'; badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; badgeText = '3 см';
+            bgStyle = '#f5f3ff'; borderStyle = '#ddd6fe'; badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; 
+            badgeText = `${s.totalHours || 8}h`;
+        }
+
+        // Если есть переработка, отобразим её акцентом
+        if (s.overtime && s.overtime > 0) {
+            badgeText = `${s.totalHours}h (+${s.overtime})`;
         }
 
         if (isWeekend || isHoliday) {
@@ -473,14 +490,14 @@ function renderCalendarGrid() {
             if (s.shift === 'none') {
                 borderStyle = '#fca5a5';
                 bgStyle = '#fef2f2';
-                if (isHoliday) badgeText = 'праздник';
+                if (isHoliday) badgeText = 'święto';
             }
         }
 
         html += `
-            <div onclick="openDayModal(${day})" title="${holidayName ? 'Święto: ' + holidayName : (isWeekend ? 'Wolne (Weekend)' : '')}" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 5px; padding: 4px 1px; text-align: center; cursor: pointer; min-height: 50px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+            <div onclick="openDayModal(${day})" title="${holidayName ? 'Święto: ' + holidayName : (isWeekend ? 'Wolne (Weekend)' : '')}" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 5px; padding: 4px 2px; text-align: center; cursor: pointer; min-height: 52px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
                 <div style="font-size: 11px; font-weight: bold; color: ${dayNumberColor};">${day}</div>
-                <div style="font-size: 8px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 3px; padding: 2px 0px; font-weight: 500; overflow: hidden; text-overflow: ellipsis;">${badgeText}</div>
+                <div style="font-size: 8px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 3px; padding: 2px 1px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${badgeText}</div>
             </div>
         `;
     }
