@@ -345,47 +345,38 @@ function showMainScreen() {
                     <h3 style="margin-top: 0; color: ${c.text}; font-size: 16px; margin-bottom: 6px;">${t('salaryViewTitle')}</h3>
                     <p style="color: ${c.textSecondary}; font-size: 12px; line-height: 1.4; margin-bottom: 12px;">${t('salaryViewDesc')}</p>
                     
-                    <!-- Блок расчетов Netto -->
+                    <!-- Блок расчетов Netto на базе общего брутто месяца -->
                     <div style="background: ${c.cardBg}; border: 1px solid ${c.border}; padding: 12px; border-radius: 8px;">
                         <div style="font-size: 13px; font-weight: bold; color: ${c.accent}; margin-bottom: 10px; border-bottom: 1px solid ${c.border}; padding-bottom: 6px;">
                             ${t('salaryHeader')}
                         </div>
                         
                         <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
-                            <span style="color: ${c.textSecondary};">${t('salaryBruttoLabel')}</span>
-                            <strong style="color: ${c.text};">${(userSettings.monthlyRate || 5800).toFixed(2)} zł</strong>
+                            <span style="color: ${c.textSecondary};">${t('salaryBruttoTotalLabel')}</span>
+                            <strong id="salaryTabTotalBrutto" style="color: ${c.text};">0.00 zł</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
                             <span style="color: ${c.textSecondary};">${t('zusWorkersLabel')}</span>
-                            <strong style="color: #dc2626;">- ${((userSettings.monthlyRate || 5800) * 0.1166).toFixed(2)} zł</strong>
+                            <strong id="salaryTabZus" style="color: #dc2626;">- 0.00 zł</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
                             <span style="color: ${c.textSecondary};">${t('healthInsLabel')}</span>
-                            <strong style="color: #dc2626;">- ${(((userSettings.monthlyRate || 5800) - ((userSettings.monthlyRate || 5800) * 0.1166)) * 0.09).toFixed(2)} zł</strong>
+                            <strong id="salaryTabHealth" style="color: #dc2626;">- 0.00 zł</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
                             <span style="color: ${c.textSecondary};">${t('taxAdvanceLabel')}</span>
-                            <strong style="color: #dc2626;">- ${Math.max(0, (((userSettings.monthlyRate || 5800) - ((userSettings.monthlyRate || 5800) * 0.1166) - 250) * 0.12) - 300).toFixed(2)} zł</strong>
+                            <strong id="salaryTabTax" style="color: #dc2626;">- 0.00 zł</strong>
                         </div>
                         
                         <!-- Итоговая чистая зарплата -->
                         <div style="display: flex; justify-content: space-between; font-size: 15px; border-top: 2px solid ${c.border}; padding-top: 8px; margin-top: 8px; color: #16a34a;">
                             <span><strong>${t('nettoFinalLabel')}</strong></span>
-                            <strong>${ (() => {
-                                const b = userSettings.monthlyRate || 5800;
-                                const zus = b * 0.1166;
-                                const baseHealth = b - zus;
-                                const health = baseHealth * 0.09;
-                                const baseTax = baseHealth - 250;
-                                const tax = Math.max(0, (baseTax * 0.12) - 300);
-                                const netto = b - zus - health - tax + (userSettings.bonus || 0);
-                                return netto.toFixed(2);
-                            })() } zł</strong>
+                            <strong id="salaryTabNetto">0.00 zł</strong>
                         </div>
 
                         <div style="display: flex; justify-content: space-between; font-size: 11px; color: ${c.textSecondary}; border-top: 1px dashed ${c.border}; padding-top: 6px; margin-top: 8px;">
                             <span>${t('employerCostLabel')}</span>
-                            <span>~${((userSettings.monthlyRate || 5800) * 1.2048).toFixed(2)} zł</span>
+                            <span id="salaryTabEmployerCost">~0.00 zł</span>
                         </div>
                     </div>
                 </div>
@@ -760,4 +751,28 @@ function calculateStats() {
     if (elNight) elNight.innerText = `${totalNightH.toFixed(1)} ч`;
     if (elTotalH) elTotalH.innerText = `${totalHoursAll.toFixed(1)} ч`;
     if (elTotalM) elTotalM.innerText = `${calculatedMoney.toFixed(2)} zł`;
+
+    // Динамический расчёт налогов и итоговой суммы Netto на вкладке "Зарплата" на основе общей суммы брутто за месяц
+    const totalBrutto = calculatedMoney;
+    const zusWorkers = totalBrutto * 0.1166;
+    const healthBase = totalBrutto - zusWorkers;
+    const healthIns = healthBase * 0.09;
+    const taxBase = healthBase - 250; // Koszty uzyskania przychodu = 250 zł
+    const taxAdvance = Math.max(0, (taxBase * 0.12) - 300); // 12% PIT минус kwota wolna (300 zł)
+    const nettoFinal = totalBrutto - zusWorkers - healthIns - taxAdvance;
+    const employerCost = totalBrutto * 1.2048; // Примерная общая стоимость для работодателя
+
+    const elTabBrutto = document.getElementById('salaryTabTotalBrutto');
+    const elTabZus = document.getElementById('salaryTabZus');
+    const elTabHealth = document.getElementById('salaryTabHealth');
+    const elTabTax = document.getElementById('salaryTabTax');
+    const elTabNetto = document.getElementById('salaryTabNetto');
+    const elTabEmployer = document.getElementById('salaryTabEmployerCost');
+
+    if (elTabBrutto) elTabBrutto.innerText = `${totalBrutto.toFixed(2)} zł`;
+    if (elTabZus) elTabZus.innerText = `- ${zusWorkers.toFixed(2)} zł`;
+    if (elTabHealth) elTabHealth.innerText = `- ${healthIns.toFixed(2)} zł`;
+    if (elTabTax) elTabTax.innerText = `- ${taxAdvance.toFixed(2)} zł`;
+    if (elTabNetto) elTabNetto.innerText = `${nettoFinal.toFixed(2)} zł`;
+    if (elTabEmployer) elTabEmployer.innerText = `~${employerCost.toFixed(2)} zł`;
 }

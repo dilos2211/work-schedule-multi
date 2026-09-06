@@ -43,10 +43,10 @@ export const translations = {
         saveSettingsBtn: "Zapisz ustawienia",
         
         salaryViewTitle: "Szczegóły kalkulacji wynagrodzenia",
-        salaryViewDesc: "Tutaj wyświetlane są szczegółowe naliczenia godzinowe, dodatki za zmiany nocne oraz dni świąteczne zgodnie z Twoim harmonogramem.",
+        salaryViewDesc: "Poniżej znajduje się szczegółowe rozliczenie faktycznego wynagrodzenia brutto za dany miesiąc (wraz z premiami i dodatkami) na kwotę netto.",
         
-        salaryHeader: "Rozliczenie wynagrodzenia (Umowa o pracę)",
-        salaryBruttoLabel: "Wynagrodzenie Brutto:",
+        salaryHeader: "Rozliczenie całościowe (Umowa o pracę)",
+        salaryBruttoTotalLabel: "Razem Brutto (z kalendarza):",
         zusWorkersLabel: "Składki społeczne ZUS (11.66%):",
         healthBaseLabel: "Podstawa składki zdrowotnej:",
         healthInsLabel: "Składka zdrowotna (9%):",
@@ -130,10 +130,10 @@ export const translations = {
         saveSettingsBtn: "Зберегти налаштування",
         
         salaryViewTitle: "Деталізація розрахунку зарплати",
-        salaryViewDesc: "Тут відображаються детальні нарахування за години, доплати за нічні зміни та святкові дні згідно з вашим графіком.",
+        salaryViewDesc: "Нижче наведено детальний розрахунок фактичного заробітку брутто за місяць (разом із преміями та доплатами) у чисту суму нетто.",
         
-        salaryHeader: "Розрахунок заробітної плати (Umowa o pracę)",
-        salaryBruttoLabel: "Оклад Брутто:",
+        salaryHeader: "Загальний розрахунок (Umowa o pracę)",
+        salaryBruttoTotalLabel: "Всього Брутто (з календаря):",
         zusWorkersLabel: "Соціальні внески ZUS (11.66%):",
         healthBaseLabel: "База для медичного внеску:",
         healthInsLabel: "Медичний внесок (9%):",
