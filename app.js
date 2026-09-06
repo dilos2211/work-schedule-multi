@@ -1,4 +1,4 @@
-// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js - Clean Save UI) ---
+// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js) ---
 
 let currentUser = JSON.parse(localStorage.getItem('work_user')) || null;
 let currentYear = new Date().getFullYear();
@@ -374,7 +374,6 @@ function setUnsaved() {
 }
 
 function updateSaveStatusUI() {
-    // Обновляем плашку на вкладке календаря и на вкладке настроек
     ['saveStatusBadge', 'saveStatusBadgeSettings'].forEach(id => {
         const badge = document.getElementById(id);
         if (!badge) return;
@@ -680,9 +679,8 @@ async function loadSettings() {
             
             if (data.shifts_config) {
                 try {
-                    userSettings.shifts_config = typeof data.shifts_config === 'string' ? JSON.parse(data.shifts_config) : data.shifts_config;
-                    // Поддержка ключей
-                    userSettings.shiftsConfig = userSettings.shifts_config;
+                    let parsedConfig = typeof data.shifts_config === 'string' ? JSON.parse(data.shifts_config) : data.shifts_config;
+                    userSettings.shiftsConfig = parsedConfig;
                 } catch (e) { console.error('Ошибка парсинга смен:', e); }
             }
 
@@ -758,7 +756,7 @@ async function saveAllData() {
             })
         });
         hasUnsavedChanges = false;
-        updateSaveStatusUI(); // Переключает плашку на «✅ Данные сохранены» без всплывающих окон
+        updateSaveStatusUI();
     } catch (e) {
         console.error('Ошибка сохранения отчета:', e);
         const badge = document.getElementById('saveStatusBadge') || document.getElementById('saveStatusBadgeSettings');
