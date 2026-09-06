@@ -2,9 +2,10 @@
 
 let currentUser = JSON.parse(localStorage.getItem('work_user')) || null;
 let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth(); // 0 - Январь, 8 - Сентябрь и т.д.
+let currentMonth = new Date().getMonth();
 let scheduleData = {};
-let activeTab = 'calendar'; // 'calendar' или 'salary'
+let activeTab = 'calendar';
+let selectedDayForModal = null;
 
 let userSettings = {
     calcType: 'monthly',
@@ -33,28 +34,29 @@ function initApp() {
     }
 }
 
-// --- ЭКРАН АВТОРИЗАЦИИ ---
+// --- ЭКРАН АВТОРИЗАЦИИ (СВЕТЛАЯ ТЕМА) ---
 
 function showAuthScreen() {
+    document.body.style.backgroundColor = "#f4f4f5";
     document.body.innerHTML = `
-        <div class="auth-container">
-            <div class="auth-card" id="authCard">
-                <h2 id="authTitle">Вход</h2>
-                <div id="errorMsg" class="error-msg" style="display:none; color:red; margin-bottom:10px;"></div>
+        <div class="auth-container" style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+            <div class="auth-card" id="authCard" style="background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; color: #18181b;">
+                <h2 id="authTitle" style="margin-top: 0; text-align: center; color: #18181b;">Вход</h2>
+                <div id="errorMsg" class="error-msg" style="display:none; color:#dc2626; margin-bottom:10px; font-size: 14px;"></div>
                 <form id="authForm" onsubmit="handleAuth(event)">
-                    <div class="form-group">
-                        <label>Email:</label>
-                        <input type="email" id="authEmail" required>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500;">Email:</label>
+                        <input type="email" id="authEmail" required style="width: 100%; padding: 10px; border: 1px solid #d4d4d8; border-radius: 6px; box-sizing: border-box; font-size: 14px;">
                     </div>
-                    <div class="form-group">
-                        <label>Пароль:</label>
-                        <input type="password" id="authPassword" required>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500;">Пароль:</label>
+                        <input type="password" id="authPassword" required style="width: 100%; padding: 10px; border: 1px solid #d4d4d8; border-radius: 6px; box-sizing: border-box; font-size: 14px;">
                     </div>
-                    <button type="submit" id="authBtn" class="btn-primary">Войти</button>
+                    <button type="submit" id="authBtn" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px;">Войти</button>
                 </form>
-                <p class="switch-auth">
-                    <span id="switchText">Нет аккаунта?</span> 
-                    <a href="#" onclick="toggleAuthMode(event)" id="switchLink">Зарегистрироваться</a>
+                <p class="switch-auth" style="text-align: center; margin-top: 15px; font-size: 14px;">
+                    <span id="switchText" style="color: #71717a;">Нет аккаунта?</span> 
+                    <a href="#" onclick="toggleAuthMode(event)" id="switchLink" style="color: #2563eb; text-decoration: none; font-weight: 500;">Зарегистрироваться</a>
                 </p>
             </div>
         </div>
@@ -107,35 +109,36 @@ function logout() {
     location.reload();
 }
 
-// --- ГЛАВНЫЙ ЭКРАН (КАК В ПРОШЛОМ ПРОЕКТЕ) ---
+// --- ГЛАВНЫЙ ЭКРАН (СВЕТЛАЯ ТЕМА) ---
 
 function showMainScreen() {
+    document.body.style.backgroundColor = "#f4f4f5";
     document.body.innerHTML = `
-        <div class="main-wrapper" style="max-width: 480px; margin: 20px auto; font-family: sans-serif; background: #18181b; color: #f4f4f5; padding: 15px; border-radius: 12px;">
+        <div class="main-wrapper" style="max-width: 480px; margin: 20px auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             
             <!-- Шапка с вкладками и кнопкой выхода -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <div style="display: flex; background: #27272a; padding: 4px; border-radius: 8px;">
-                    <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#d4af37' : 'transparent'}; color: ${activeTab === 'calendar' ? '#000' : '#fff'}; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">📅 Календарь</button>
-                    <button onclick="switchTab('salary')" id="tabSalary" style="background: ${activeTab === 'salary' ? '#d4af37' : 'transparent'}; color: ${activeTab === 'salary' ? '#000' : '#fff'}; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold;">💰 Расчет зарплаты</button>
+                <div style="display: flex; background: #f4f4f5; padding: 4px; border-radius: 8px;">
+                    <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'calendar' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">📅 Календарь</button>
+                    <button onclick="switchTab('salary')" id="tabSalary" style="background: ${activeTab === 'salary' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'salary' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">💰 Зарплата</button>
                 </div>
-                <button onclick="logout()" style="background: #ef4444; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">Выйти</button>
+                <button onclick="logout()" style="background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">Выйти</button>
             </div>
 
             <!-- Вкладка: Календарь -->
             <div id="viewCalendar" style="display: ${activeTab === 'calendar' ? 'block' : 'none'};">
                 
                 <!-- Выбор месяца и года -->
-                <div style="background: #27272a; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
                     <div>
-                        <label style="font-size: 12px; color: #a1a1aa;">Месяц:</label>
-                        <select id="selectMonth" onchange="changeMonthYear()" style="width: 100%; background: #18181b; color: #fff; border: 1px solid #3f3f46; padding: 6px; border-radius: 6px;">
+                        <label style="font-size: 12px; color: #71717a; font-weight: 500;">Месяц:</label>
+                        <select id="selectMonth" onchange="changeMonthYear()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px;">
                             ${monthNames.map((m, idx) => `<option value="${idx}" ${idx === currentMonth ? 'selected' : ''}>${m}</option>`).join('')}
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 12px; color: #a1a1aa;">Год:</label>
-                        <select id="selectYear" onchange="changeMonthYear()" style="width: 100%; background: #18181b; color: #fff; border: 1px solid #3f3f46; padding: 6px; border-radius: 6px;">
+                        <label style="font-size: 12px; color: #71717a; font-weight: 500;">Год:</label>
+                        <select id="selectYear" onchange="changeMonthYear()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px;">
                             <option value="2025" ${currentYear === 2025 ? 'selected' : ''}>2025</option>
                             <option value="2026" ${currentYear === 2026 ? 'selected' : ''}>2026</option>
                             <option value="2027" ${currentYear === 2027 ? 'selected' : ''}>2027</option>
@@ -144,50 +147,80 @@ function showMainScreen() {
                 </div>
 
                 <!-- Настройки оплаты -->
-                <div style="background: #27272a; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
                     <div style="margin-bottom: 8px;">
-                        <label style="font-size: 12px; color: #a1a1aa;">Тип оплаты:</label>
-                        <select id="calcType" onchange="updateSettingsFromUI()" style="width: 100%; background: #18181b; color: #fff; border: 1px solid #3f3f46; padding: 6px; border-radius: 6px;">
+                        <label style="font-size: 12px; color: #71717a; font-weight: 500;">Тип оплаты:</label>
+                        <select id="calcType" onchange="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px;">
                             <option value="monthly" ${userSettings.calcType === 'monthly' ? 'selected' : ''}>Оклад за месяц (zł/мес)</option>
                             <option value="hourly" ${userSettings.calcType === 'hourly' ? 'selected' : ''}>Почасовая ставка (zł/ч)</option>
                         </select>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
-                            <label style="font-size: 12px; color: #a1a1aa;" id="labelRateName">Оклад брутто (zł):</label>
-                            <input type="number" id="inputRateValue" value="${userSettings.monthlyRate}" oninput="updateSettingsFromUI()" style="width: 100%; background: #18181b; color: #fff; border: 1px solid #3f3f46; padding: 6px; border-radius: 6px; box-sizing: border-box;">
+                            <label style="font-size: 12px; color: #71717a; font-weight: 500;">Оклад брутто (zł):</label>
+                            <input type="number" id="inputRateValue" value="${userSettings.monthlyRate}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="font-size: 12px; color: #a1a1aa;">Премия брутто (zł):</label>
-                            <input type="number" id="inputBonus" value="${userSettings.bonus}" oninput="updateSettingsFromUI()" style="width: 100%; background: #18181b; color: #fff; border: 1px solid #3f3f46; padding: 6px; border-radius: 6px; box-sizing: border-box;">
+                            <label style="font-size: 12px; color: #71717a; font-weight: 500;">Премия брутто (zł):</label>
+                            <input type="number" id="inputBonus" value="${userSettings.bonus}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box;">
                         </div>
                     </div>
                 </div>
 
                 <!-- Сетка календаря -->
-                <div id="calendarGrid" style="background: #27272a; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                    <!-- Динамически заполняется днями -->
-                </div>
+                <div id="calendarGrid" style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
 
                 <!-- Статистика -->
-                <div style="background: #27272a; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span>Отработано дней:</span> <strong id="statDays">0</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span>Базовые часы:</span> <strong id="statBaseHours">0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span>Переработка (Nadgodziny):</span> <strong id="statOvertime" style="color: #f59e0b;">0.0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span>Ночные часы (22:00-06:00):</span> <strong id="statNight" style="color: #a78bfa;">0.0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; border-top: 1px solid #3f3f46; padding-top: 6px;"><span>Всего часов:</span> <strong id="statTotalHours">0.0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 16px; border-top: 1px solid #3f3f46; padding-top: 6px; margin-top: 6px; color: #d4af37;"><span>Ориентировочно брутто:</span> <strong id="statTotalMoney">0.00 zł</strong></div>
+                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Отработано дней:</span> <strong id="statDays">0</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Базовые часы:</span> <strong id="statBaseHours">0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Переработка (Nadgodziny):</span> <strong id="statOvertime" style="color: #d97706;">0.0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Ночные часы (22:00-06:00):</span> <strong id="statNight" style="color: #7c3aed;">0.0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; border-top: 1px solid #e4e4e7; padding-top: 6px;"><span style="color: #71717a;">Всего часов:</span> <strong id="statTotalHours">0.0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; border-top: 1px solid #e4e4e7; padding-top: 6px; margin-top: 6px; color: #2563eb;"><span>Ориентировочно брутто:</span> <strong id="statTotalMoney">0.00 zł</strong></div>
                 </div>
 
-                <button onclick="saveShiftsToServer(); alert('Отчет сохранен!');" style="width: 100%; background: #d4af37; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Сохранить отчет</button>
+                <button onclick="saveShiftsToServer(); alert('Отчет успешно сохранен!');" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Сохранить отчет</button>
             </div>
 
-            <!-- Вкладка: Расчет зарплаты (Детали) -->
-            <div id="viewSalary" style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: #27272a; padding: 15px; border-radius: 8px;">
-                <h3>Детализация расчета</h3>
-                <p style="color: #a1a1aa; font-size: 14px;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни в соответствии с вашим графиком.</p>
+            <!-- Вкладка: Расчет зарплаты -->
+            <div id="viewSalary" style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 15px; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #18181b;">Детализация расчета</h3>
+                <p style="color: #71717a; font-size: 14px; line-height: 1.5;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни согласно вашему графику.</p>
             </div>
 
+        </div>
+
+        <!-- Модальное окно редактирования дня -->
+        <div id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 1000;">
+            <div style="background: #ffffff; padding: 20px; border-radius: 12px; width: 90%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b;">
+                <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 15px; font-size: 18px; text-align: center;">Настройка дня</h3>
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #71717a; font-weight: 500;">Тип смены:</label>
+                    <select id="modalShiftType" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; margin-top: 4px;">
+                        <option value="none">Выходной / Не работаю</option>
+                        <option value="1">1 смена (утренняя)</option>
+                        <option value="2">2 смена (вечерняя)</option>
+                        <option value="3">3 смена (ночная)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #71717a; font-weight: 500;">Всего часов:</label>
+                    <input type="number" id="modalTotalHours" step="0.5" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="font-size: 12px; color: #71717a; font-weight: 500;">Переработка (Nadgodziny):</label>
+                    <input type="number" id="modalOvertime" step="0.5" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="closeDayModal()" style="flex: 1; background: #f4f4f5; color: #18181b; border: 1px solid #d4d4d8; padding: 10px; border-radius: 6px; font-weight: 500; cursor: pointer;">Отмена</button>
+                    <button onclick="saveDayModal()" style="flex: 1; background: #2563eb; color: #ffffff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">Сохранить</button>
+                </div>
+            </div>
         </div>
     `;
 
@@ -195,7 +228,7 @@ function showMainScreen() {
     calculateStats();
 }
 
-// --- ЛОГИКА КАЛЕНДАРЯ И ПЕРЕКЛЮЧЕНИЙ ---
+// --- ЛОГИКА КАЛЕНДАРЯ И МОДАЛЬНОГО ОКНА ---
 
 function switchTab(tab) {
     activeTab = tab;
@@ -216,48 +249,44 @@ function updateSettingsFromUI() {
     calculateStats();
 }
 
-// Отрисовка сетки дней месяца
+// Отрисовка сетки дней месяца в светлом стиле
 function renderCalendarGrid() {
     const grid = document.getElementById('calendarGrid');
     if (!grid) return;
 
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     
-    // Шапка дней недели
-    let html = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: #a1a1aa; margin-bottom: 8px;">
+    let html = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: #71717a; font-weight: 600; margin-bottom: 8px;">
         <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
     </div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">`;
 
-    // Определяем день недели для первого дня месяца (0 - Пн в нашей верстке)
     let firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-    firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1; // Сдвиг под Пн
+    firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
 
-    // Пустые ячейки для выравнивания начала месяца
     for (let i = 0; i < firstDayIndex; i++) {
         html += `<div></div>`;
     }
 
-    // Дни месяца
     for (let day = 1; day <= daysInMonth; day++) {
-        const shiftData = scheduleData[day] || { shift: 'none', start: '06:00', end: '14:00', totalHours: 8, overtime: 0 };
-        let bgStyle = '#18181b';
-        let badgeText = '';
+        const s = scheduleData[day] || { shift: 'none', totalHours: 0, overtime: 0 };
+        let bgStyle = '#ffffff';
+        let borderStyle = '#d4d4d8';
+        let badgeBg = '#f4f4f5';
+        let badgeColor = '#71717a';
+        let badgeText = 'выходной';
 
-        if (shiftData.shift === '1') {
-            bgStyle = '#1e3a8a'; // Синий для 1 смены
-            badgeText = '1 смена';
-        } else if (shiftData.shift === '2') {
-            bgStyle = '#78350f'; // Оранжевый/Коричневый для 2 смены
-            badgeText = '2 смена';
-        } else if (shiftData.shift === '3') {
-            bgStyle = '#3b0764'; // Фиолетовый для 3 смены
-            badgeText = '3 смена';
+        if (s.shift === '1') {
+            bgStyle = '#eff6ff'; borderStyle = '#bfdbfe'; badgeBg = '#dbeafe'; badgeColor = '#1d4ed8'; badgeText = '1 смена';
+        } else if (s.shift === '2') {
+            bgStyle = '#fff7ed'; borderStyle = '#fed7aa'; badgeBg = '#ffedd5'; badgeColor = '#c2410c'; badgeText = '2 смена';
+        } else if (s.shift === '3') {
+            bgStyle = '#f5f3ff'; borderStyle = '#ddd6fe'; badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; badgeText = '3 смена';
         }
 
         html += `
-            <div onclick="cycleShift(${day})" style="background: ${bgStyle}; border: 1px solid #3f3f46; border-radius: 6px; padding: 6px 2px; text-align: center; cursor: pointer; min-height: 50px; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 12px; font-weight: bold;">${day}</div>
-                <div style="font-size: 9px; background: rgba(0,0,0,0.3); border-radius: 3px; padding: 2px;">${badgeText || 'выходной'}</div>
+            <div onclick="openDayModal(${day})" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 6px; padding: 6px 2px; text-align: center; cursor: pointer; min-height: 55px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;">
+                <div style="font-size: 12px; font-weight: bold; color: #18181b;">${day}</div>
+                <div style="font-size: 9px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 4px; padding: 2px 1px; font-weight: 500;">${badgeText}</div>
             </div>
         `;
     }
@@ -266,17 +295,45 @@ function renderCalendarGrid() {
     grid.innerHTML = html;
 }
 
-// Переключение смены по клику на день (none -> 1 -> 2 -> 3 -> none)
-function cycleShift(day) {
-    if (!scheduleData[day]) {
-        scheduleData[day] = { shift: '1', start: '06:00', end: '14:00', totalHours: 8, overtime: 0 };
+// Открытие модального окна для настройки конкретного дня
+function openDayModal(day) {
+    selectedDayForModal = day;
+    const s = scheduleData[day] || { shift: '1', totalHours: 8, overtime: 0 };
+    
+    document.getElementById('modalTitle').innerText = `День ${day} ${monthNames[currentMonth]} ${currentYear}`;
+    document.getElementById('modalShiftType').value = s.shift || 'none';
+    document.getElementById('modalTotalHours').value = s.totalHours !== undefined ? s.totalHours : (s.shift !== 'none' ? 8 : 0);
+    document.getElementById('modalOvertime').value = s.overtime || 0;
+    
+    document.getElementById('dayModal').style.display = 'flex';
+}
+
+function closeDayModal() {
+    document.getElementById('dayModal').style.display = 'none';
+    selectedDayForModal = null;
+}
+
+// Сохранение изменений из модального окна
+function saveDayModal() {
+    if (selectedDayForModal === null) return;
+    
+    const shiftType = document.getElementById('modalShiftType').value;
+    const totalHours = parseFloat(document.getElementById('modalTotalHours').value) || 0;
+    const overtime = parseFloat(document.getElementById('modalOvertime').value) || 0;
+
+    if (shiftType === 'none') {
+        delete scheduleData[selectedDayForModal];
     } else {
-        const current = scheduleData[day].shift;
-        if (current === 'none') scheduleData[day].shift = '1';
-        else if (current === '1') scheduleData[day].shift = '2';
-        else if (current === '2') scheduleData[day].shift = '3';
-        else scheduleData[day].shift = 'none';
+        scheduleData[selectedDayForModal] = {
+            shift: shiftType,
+            start: '06:00',
+            end: '14:00',
+            totalHours: totalHours,
+            overtime: overtime
+        };
     }
+
+    closeDayModal();
     renderCalendarGrid();
     calculateStats();
 }
@@ -285,21 +342,22 @@ function cycleShift(day) {
 function calculateStats() {
     let daysWorked = 0;
     let totalHours = 0;
+    let totalOvertime = 0;
 
     for (let day in scheduleData) {
         const s = scheduleData[day];
         if (s && s.shift && s.shift !== 'none') {
             daysWorked++;
-            totalHours += 8; // Базово 8 часов за смену
+            totalHours += (s.totalHours || 8);
+            totalOvertime += (s.overtime || 0);
         }
     }
 
-    const baseHours = Math.min(totalHours, 168); // Норма часов примерно
-    const overtime = Math.max(0, totalHours - 168);
+    const baseHours = Math.max(0, totalHours - totalOvertime);
 
     document.getElementById('statDays').innerText = daysWorked;
-    document.getElementById('statBaseHours').innerText = `${baseHours} ч (из 168ч)`;
-    document.getElementById('statOvertime').innerText = `${overtime.toFixed(1)} ч`;
+    document.getElementById('statBaseHours').innerText = `${baseHours.toFixed(1)} ч`;
+    document.getElementById('statOvertime').innerText = `${totalOvertime.toFixed(1)} ч`;
     document.getElementById('statNight').innerText = `0.0 ч`;
     document.getElementById('statTotalHours').innerText = `${totalHours.toFixed(1)} ч`;
 
@@ -322,7 +380,7 @@ async function loadSettings() {
                 bonus: data.bonus || 850,
                 manualKantyna: data.manual_kantyna || 0
             };
-            showMainScreen(); // Перерисовываем с актуальными данными
+            showMainScreen();
         }
     } catch (e) {
         console.error('Ошибка загрузки настроек:', e);
