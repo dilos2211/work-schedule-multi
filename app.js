@@ -1,4 +1,4 @@
-// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js - Mobile Optimized) ---
+// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js - Settings & Mobile Optimized) ---
 
 let currentUser = JSON.parse(localStorage.getItem('work_user')) || null;
 let currentYear = new Date().getFullYear();
@@ -6,14 +6,20 @@ let currentMonth = new Date().getMonth();
 let scheduleData = {};
 let activeTab = 'calendar';
 let selectedDayForModal = null;
-let hasUnsavedChanges = false; // Флаг наличия несохраненных изменений
+let hasUnsavedChanges = false;
 
 let userSettings = {
     calcType: 'monthly',
-    monthlyRate: 5500, // Месячная ставка брутто
-    rate: 25,          // Часовая ставка нетто
+    monthlyRate: 5500,
+    rate: 25,
     bonus: 850,
-    manualKantyna: 0
+    manualKantyna: 0,
+    // Настройки времени смен по умолчанию
+    shiftsConfig: {
+        '1': { start: '06:00', end: '14:00' },
+        '2': { start: '14:00', end: '22:00' },
+        '3': { start: '22:00', end: '06:00' }
+    }
 };
 
 const monthNames = [
@@ -50,7 +56,6 @@ function getPolishFloatingHolidays(year) {
         day = ((h + l - 7 * m + 114) % 31) + 1;
 
     let easterDate = new Date(year, month, day);
-    
     let easterMonday = new Date(easterDate);
     easterMonday.setDate(easterDate.getDate() + 1);
 
@@ -78,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initApp() {
-    // Гарантируем корректный viewport на мобильных
     let metaViewport = document.querySelector('meta[name=viewport]');
     if (!metaViewport) {
         metaViewport = document.createElement('meta');
@@ -188,12 +192,14 @@ function showMainScreen() {
     document.body.innerHTML = `
         <div class="main-wrapper" style="width: 100%; max-width: 480px; margin: 0 auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 10px; box-sizing: border-box; min-height: 100vh;">
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px;">
+            <!-- Навигационные вкладки -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 4px;">
                 <div style="display: flex; background: #f4f4f5; padding: 3px; border-radius: 8px; flex-grow: 1; justify-content: space-around;">
-                    <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'calendar' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; flex: 1;">📅 Календарь</button>
-                    <button onclick="switchTab('salary')" id="tabSalary" style="background: ${activeTab === 'salary' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'salary' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; flex: 1;">💰 Зарплата</button>
+                    <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'calendar' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; flex: 1;">📅 Календарь</button>
+                    <button onclick="switchTab('salary')" id="tabSalary" style="background: ${activeTab === 'salary' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'salary' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; flex: 1;">💰 Зарплата</button>
+                    <button onclick="switchTab('settings')" id="tabSettings" style="background: ${activeTab === 'settings' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'settings' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; flex: 1;">⚙️ Настройки</button>
                 </div>
-                <button onclick="logout()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap;">Выйти</button>
+                <button onclick="logout()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 500; white-space: nowrap;">Выйти</button>
             </div>
 
             <!-- Вкладка: Календарь -->
@@ -259,6 +265,59 @@ function showMainScreen() {
             <div id="viewSalary" style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; box-sizing: border-box;">
                 <h3 style="margin-top: 0; color: #18181b; font-size: 16px;">Детализация расчета</h3>
                 <p style="color: #71717a; font-size: 13px; line-height: 1.4;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни согласно вашему графику.</p>
+            </div>
+
+            <!-- Вкладка: Настройки (Время смен) -->
+            <div id="viewSettings" style="display: ${activeTab === 'settings' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; box-sizing: border-box;">
+                <h3 style="margin-top: 0; color: #18181b; font-size: 16px; margin-bottom: 10px;">⏰ Время смен по умолчанию</h3>
+                <p style="color: #71717a; font-size: 12px; line-height: 1.4; margin-bottom: 15px;">Укажите стандартные часы начала и конца для каждой смены. При выборе смены в календаре эти значения будут подставляться автоматически.</p>
+                
+                <!-- 1 смена -->
+                <div style="background: #ffffff; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                    <div style="font-weight: bold; font-size: 13px; color: #1d4ed8; margin-bottom: 8px;">1 смена</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">С какого:</label>
+                            <input type="time" id="cfgShift1Start" value="${userSettings.shiftsConfig['1'].start}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">По какое:</label>
+                            <input type="time" id="cfgShift1End" value="${userSettings.shiftsConfig['1'].end}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2 смена -->
+                <div style="background: #ffffff; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                    <div style="font-weight: bold; font-size: 13px; color: #c2410c; margin-bottom: 8px;">2 смена</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">С какого:</label>
+                            <input type="time" id="cfgShift2Start" value="${userSettings.shiftsConfig['2'].start}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">По какое:</label>
+                            <input type="time" id="cfgShift2End" value="${userSettings.shiftsConfig['2'].end}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3 смена -->
+                <div style="background: #ffffff; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="font-weight: bold; font-size: 13px; color: #6d28d9; margin-bottom: 8px;">3 смена</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">С какого:</label>
+                            <input type="time" id="cfgShift3Start" value="${userSettings.shiftsConfig['3'].start}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #71717a; display: block; margin-bottom: 2px;">По какое:</label>
+                            <input type="time" id="cfgShift3End" value="${userSettings.shiftsConfig['3'].end}" onchange="updateShiftsConfigFromUI()" style="width: 100%; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box; background: #fff;">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="saveAllData()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;">Сохранить настройки</button>
             </div>
 
         </div>
@@ -365,6 +424,20 @@ function updateSettingsFromUI() {
     calculateStats();
 }
 
+function updateShiftsConfigFromUI() {
+    userSettings.shiftsConfig['1'].start = document.getElementById('cfgShift1Start').value;
+    userSettings.shiftsConfig['1'].end = document.getElementById('cfgShift1End').value;
+    
+    userSettings.shiftsConfig['2'].start = document.getElementById('cfgShift2Start').value;
+    userSettings.shiftsConfig['2'].end = document.getElementById('cfgShift2End').value;
+    
+    userSettings.shiftsConfig['3'].start = document.getElementById('cfgShift3Start').value;
+    userSettings.shiftsConfig['3'].end = document.getElementById('cfgShift3End').value;
+
+    saveSettingsToServer();
+    setUnsaved();
+}
+
 function renderCalendarGrid() {
     const grid = document.getElementById('calendarGrid');
     if (!grid) return;
@@ -437,13 +510,14 @@ let currentModalShift = '1';
 
 function openDayModal(day) {
     selectedDayForModal = day;
-    const s = scheduleData[day] || { shift: '1', start: '06:00', end: '14:00' };
+    const defaultShiftTime = userSettings.shiftsConfig['1'];
+    const s = scheduleData[day] || { shift: '1', start: defaultShiftTime.start, end: defaultShiftTime.end };
     
     document.getElementById('modalTitle').innerText = `${day} ${monthNames[currentMonth]}`;
     currentModalShift = s.shift || '1';
     
-    document.getElementById('modalStart').value = s.start || '06:00';
-    document.getElementById('modalEnd').value = s.end || '14:00';
+    document.getElementById('modalStart').value = s.start || defaultShiftTime.start;
+    document.getElementById('modalEnd').value = s.end || defaultShiftTime.end;
     
     updateModalShiftButtons();
     recalculateModalHours();
@@ -460,15 +534,12 @@ function selectModalShift(shiftType) {
     currentModalShift = shiftType;
     updateModalShiftButtons();
 
-    if (shiftType === '1') {
-        document.getElementById('modalStart').value = '06:00';
-        document.getElementById('modalEnd').value = '14:00';
-    } else if (shiftType === '2') {
-        document.getElementById('modalStart').value = '14:00';
-        document.getElementById('modalEnd').value = '22:00';
-    } else if (shiftType === '3') {
-        document.getElementById('modalStart').value = '22:00';
-        document.getElementById('modalEnd').value = '06:00';
+    if (shiftType !== 'none') {
+        const cfg = userSettings.shiftsConfig[shiftType];
+        if (cfg) {
+            document.getElementById('modalStart').value = cfg.start;
+            document.getElementById('modalEnd').value = cfg.end;
+        }
     }
     recalculateModalHours();
 }
@@ -596,26 +667,17 @@ async function loadSettings() {
         const res = await fetch(`/settings?userId=${currentUser.id}`);
         const data = await res.json();
         if (data && data.user_id) {
-            userSettings = {
-                calcType: data.calc_type || 'monthly',
-                monthlyRate: data.monthly_rate || 5500,
-                rate: data.rate || 25,
-                bonus: data.bonus !== undefined ? data.bonus : 850,
-                manualKantyna: data.manual_kantyna || 0
-            };
+            userSettings.calcType = data.calc_type || 'monthly';
+            userSettings.monthlyRate = data.monthly_rate || 5500;
+            userSettings.rate = data.rate || 25;
+            userSettings.bonus = data.bonus !== undefined ? data.bonus : 850;
+            userSettings.manualKantyna = data.manual_kantyna || 0;
             
-            const calcTypeSelect = document.getElementById('calcType');
-            if (calcTypeSelect) calcTypeSelect.value = userSettings.calcType;
-
-            const rateInput = document.getElementById('inputRateValue');
-            if (rateInput) rateInput.value = userSettings.calcType === 'hourly' ? userSettings.rate : userSettings.monthlyRate;
-
-            const bonusInput = document.getElementById('inputBonus');
-            if (bonusInput) bonusInput.value = userSettings.bonus;
-
-            const labelElem = document.getElementById('labelRateName');
-            if (labelElem) {
-                labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка час (нетто):' : 'Оклад брутто (zł):';
+            // Если с сервера пришла конфигурация смен
+            if (data.shifts_config) {
+                try {
+                    userSettings.shiftsConfig = typeof data.shifts_config === 'string' ? JSON.parse(data.shifts_config) : data.shifts_config;
+                } catch (e) { console.error('Ошибка парсинга смен:', e); }
             }
 
             showMainScreen();
@@ -638,7 +700,8 @@ async function saveSettingsToServer() {
                 monthlyRate: userSettings.monthlyRate,
                 rate: userSettings.rate,
                 bonus: userSettings.bonus,
-                manualKantyna: userSettings.manualKantyna
+                manualKantyna: userSettings.manualKantyna,
+                shiftsConfig: userSettings.shiftsConfig
             })
         });
     } catch (e) {
@@ -690,7 +753,7 @@ async function saveAllData() {
         });
         hasUnsavedChanges = false;
         updateSaveStatusUI();
-        alert('Отчет успешно сохранен!');
+        alert('Настройки и отчет успешно сохранены!');
     } catch (e) {
         console.error('Ошибка сохранения отчета:', e);
         alert('Ошибка при сохранении отчета!');
