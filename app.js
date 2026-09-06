@@ -1,4 +1,4 @@
-// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js) ---
+// --- ОСНОВНОЙ КЛИЕНТСКИЙ СКРИПТ (app.js - Mobile Optimized) ---
 
 let currentUser = JSON.parse(localStorage.getItem('work_user')) || null;
 let currentYear = new Date().getFullYear();
@@ -78,6 +78,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initApp() {
+    // Гарантируем корректный viewport на мобильных
+    let metaViewport = document.querySelector('meta[name=viewport]');
+    if (!metaViewport) {
+        metaViewport = document.createElement('meta');
+        metaViewport.name = 'viewport';
+        document.head.appendChild(metaViewport);
+    }
+    metaViewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+
     if (!currentUser) {
         showAuthScreen();
     } else {
@@ -91,9 +100,13 @@ function initApp() {
 
 function showAuthScreen() {
     document.body.style.backgroundColor = "#f4f4f5";
+    document.body.style.margin = "0";
+    document.body.style.padding = "10px";
+    document.body.style.boxSizing = "border-box";
+    
     document.body.innerHTML = `
-        <div class="auth-container" style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-            <div class="auth-card" id="authCard" style="background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; color: #18181b;">
+        <div class="auth-container" style="display: flex; justify-content: center; align-items: center; min-height: 95vh;">
+            <div class="auth-card" id="authCard" style="background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; color: #18181b; box-sizing: border-box;">
                 <h2 id="authTitle" style="margin-top: 0; text-align: center; color: #18181b;">Вход</h2>
                 <div id="errorMsg" class="error-msg" style="display:none; color:#dc2626; margin-bottom:10px; font-size: 14px;"></div>
                 <form id="authForm" onsubmit="handleAuth(event)">
@@ -105,7 +118,7 @@ function showAuthScreen() {
                         <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500;">Пароль:</label>
                         <input type="password" id="authPassword" required style="width: 100%; padding: 10px; border: 1px solid #d4d4d8; border-radius: 6px; box-sizing: border-box; font-size: 14px;">
                     </div>
-                    <button type="submit" id="authBtn" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px;">Войти</button>
+                    <button type="submit" id="authBtn" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; box-sizing: border-box;">Войти</button>
                 </form>
                 <p class="switch-auth" style="text-align: center; margin-top: 15px; font-size: 14px;">
                     <span id="switchText" style="color: #71717a;">Нет аккаунта?</span> 
@@ -168,30 +181,34 @@ function showMainScreen() {
     const isHourly = userSettings.calcType === 'hourly';
 
     document.body.style.backgroundColor = "#f4f4f5";
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.boxSizing = "border-box";
+
     document.body.innerHTML = `
-        <div class="main-wrapper" style="max-width: 480px; margin: 20px auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div class="main-wrapper" style="width: 100%; max-width: 480px; margin: 0 auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 10px; box-sizing: border-box; min-height: 100vh;">
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <div style="display: flex; background: #f4f4f5; padding: 4px; border-radius: 8px;">
-                    <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'calendar' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">📅 Календарь</button>
-                    <button onclick="switchTab('salary')" id="tabSalary" style="background: ${activeTab === 'salary' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'salary' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">💰 Зарплата</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px;">
+                <div style="display: flex; background: #f4f4f5; padding: 3px; border-radius: 8px; flex-grow: 1; justify-content: space-around;">
+                    <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'calendar' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; flex: 1;">📅 Календарь</button>
+                    <button onclick="switchTab('salary')" id="tabSalary" style="background: ${activeTab === 'salary' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'salary' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; flex: 1;">💰 Зарплата</button>
                 </div>
-                <button onclick="logout()" style="background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">Выйти</button>
+                <button onclick="logout()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap;">Выйти</button>
             </div>
 
             <!-- Вкладка: Календарь -->
             <div id="viewCalendar" style="display: ${activeTab === 'calendar' ? 'block' : 'none'};">
                 
-                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 12px; display: grid; grid-template-columns: 2fr 1fr; gap: 8px; box-sizing: border-box;">
                     <div>
-                        <label style="font-size: 12px; color: #71717a; font-weight: 500;">Месяц:</label>
-                        <select id="selectMonth" onchange="changeMonthYear()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px;">
+                        <label style="font-size: 12px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;">Месяц:</label>
+                        <select id="selectMonth" onchange="changeMonthYear()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px 6px; border-radius: 6px; box-sizing: border-box;">
                             ${monthNames.map((m, idx) => `<option value="${idx}" ${idx === currentMonth ? 'selected' : ''}>${m}</option>`).join('')}
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 12px; color: #71717a; font-weight: 500;">Год:</label>
-                        <select id="selectYear" onchange="changeMonthYear()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px;">
+                        <label style="font-size: 12px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;">Год:</label>
+                        <select id="selectYear" onchange="changeMonthYear()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px 6px; border-radius: 6px; box-sizing: border-box;">
                             <option value="2025" ${currentYear === 2025 ? 'selected' : ''}>2025</option>
                             <option value="2026" ${currentYear === 2026 ? 'selected' : ''}>2026</option>
                             <option value="2027" ${currentYear === 2027 ? 'selected' : ''}>2027</option>
@@ -199,86 +216,86 @@ function showMainScreen() {
                     </div>
                 </div>
 
-                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box;">
                     <div style="margin-bottom: 8px;">
-                        <label style="font-size: 12px; color: #71717a; font-weight: 500;">Тип оплаты:</label>
-                        <select id="calcType" onchange="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px;">
+                        <label style="font-size: 12px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;">Тип оплаты:</label>
+                        <select id="calcType" onchange="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
                             <option value="monthly" ${!isHourly ? 'selected' : ''}>Оклад за месяц (брутто)</option>
                             <option value="hourly" ${isHourly ? 'selected' : ''}>Почасовая ставка (нетто)</option>
                         </select>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <div>
-                            <label style="font-size: 12px; color: #71717a; font-weight: 500;" id="labelRateName">${isHourly ? 'Ставка в час нетто (zł):' : 'Оклад брутто (zł):'}</label>
-                            <input type="number" id="inputRateValue" value="${isHourly ? userSettings.rate : userSettings.monthlyRate}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box;">
+                            <label style="font-size: 11px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;" id="labelRateName">${isHourly ? 'Ставка час (нетто):' : 'Оклад брутто (zł):'}</label>
+                            <input type="number" id="inputRateValue" value="${isHourly ? userSettings.rate : userSettings.monthlyRate}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="font-size: 12px; color: #71717a; font-weight: 500;">Премия (zł):</label>
-                            <input type="number" id="inputBonus" value="${userSettings.bonus}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box;">
+                            <label style="font-size: 11px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;">Премия (zł):</label>
+                            <input type="number" id="inputBonus" value="${userSettings.bonus}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
                         </div>
                     </div>
                 </div>
 
                 <!-- Сетка календаря -->
-                <div id="calendarGrid" style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
+                <div id="calendarGrid" style="background: #fafafa; border: 1px solid #e4e4e7; padding: 8px; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box;"></div>
 
                 <!-- Статистика -->
-                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Отработано дней:</span> <strong id="statDays">0</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Базовые часы:</span> <strong id="statBaseHours">0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Переработка (Nadgodziny):</span> <strong id="statOvertime" style="color: #d97706;">0.0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Ночные часы (22:00-06:00):</span> <strong id="statNight" style="color: #7c3aed;">0.0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; border-top: 1px solid #e4e4e7; padding-top: 6px;"><span style="color: #71717a;">Всего часов:</span> <strong id="statTotalHours">0.0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 16px; border-top: 1px solid #e4e4e7; padding-top: 6px; margin-top: 6px; color: #2563eb;"><span>Итого (${isHourly ? 'нетто' : 'брутто'}):</span> <strong id="statTotalMoney">0.00 zł</strong></div>
+                <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: #71717a;">Отработано дней:</span> <strong id="statDays">0</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: #71717a;">Базовые часы:</span> <strong id="statBaseHours">0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: #71717a;">Переработка (Nadgodziny):</span> <strong id="statOvertime" style="color: #d97706;">0.0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: #71717a;">Ночные часы (22:00-06:00):</span> <strong id="statNight" style="color: #7c3aed;">0.0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; border-top: 1px solid #e4e4e7; padding-top: 5px;"><span style="color: #71717a;">Всего часов:</span> <strong id="statTotalHours">0.0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 15px; border-top: 1px solid #e4e4e7; padding-top: 5px; margin-top: 5px; color: #2563eb;"><span>Итого (${isHourly ? 'нетто' : 'брутто'}):</span> <strong id="statTotalMoney">0.00 zł</strong></div>
                 </div>
 
                 <!-- Плашка статуса сохранения -->
-                <div id="saveStatusBadge" style="padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; text-align: center; margin-bottom: 10px; display: none;"></div>
+                <div id="saveStatusBadge" style="padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; text-align: center; margin-bottom: 10px; display: none; box-sizing: border-box;"></div>
 
-                <button onclick="saveAllData();" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Сохранить отчет</button>
+                <button onclick="saveAllData();" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; box-sizing: border-box; margin-bottom: 20px;">Сохранить отчет</button>
             </div>
 
             <!-- Вкладка: Зарплата -->
-            <div id="viewSalary" style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 15px; border-radius: 8px;">
-                <h3 style="margin-top: 0; color: #18181b;">Детализация расчета</h3>
-                <p style="color: #71717a; font-size: 14px; line-height: 1.5;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни согласно вашему графику.</p>
+            <div id="viewSalary" style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; box-sizing: border-box;">
+                <h3 style="margin-top: 0; color: #18181b; font-size: 16px;">Детализация расчета</h3>
+                <p style="color: #71717a; font-size: 13px; line-height: 1.4;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни согласно вашему графику.</p>
             </div>
 
         </div>
 
         <!-- Модальное окно редактирования дня -->
-        <div id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 1000;">
-            <div style="background: #ffffff; padding: 20px; border-radius: 12px; width: 90%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b; position: relative;">
+        <div id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; box-sizing: border-box; padding: 15px;">
+            <div style="background: #ffffff; padding: 15px; border-radius: 12px; width: 100%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b; position: relative; box-sizing: border-box;">
                 
-                <button onclick="closeDayModal()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 18px; cursor: pointer; color: #71717a;">✕</button>
+                <button onclick="closeDayModal()" style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; font-size: 18px; cursor: pointer; color: #71717a; padding: 4px;">✕</button>
 
-                <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 15px; font-size: 18px; font-weight: bold;">1 Сентябрь</h3>
+                <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 12px; font-size: 16px; font-weight: bold;">1 Сентябрь</h3>
                 
-                <div style="font-size: 13px; color: #71717a; margin-bottom: 8px; font-weight: 500;">Быстрый выбор смены:</div>
+                <div style="font-size: 12px; color: #71717a; margin-bottom: 6px; font-weight: 500;">Быстрый выбор смены:</div>
                 
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px;">
-                    <button type="button" id="btnShift1" onclick="selectModalShift('1')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 12px; font-weight: bold; cursor: pointer;">1 смена</button>
-                    <button type="button" id="btnShift2" onclick="selectModalShift('2')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 12px; font-weight: bold; cursor: pointer;">2 смена</button>
-                    <button type="button" id="btnShift3" onclick="selectModalShift('3')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 12px; font-weight: bold; cursor: pointer;">3 смена</button>
-                    <button type="button" id="btnShiftNone" onclick="selectModalShift('none')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #71717a; font-size: 11px; font-weight: bold; cursor: pointer;">Выходной</button>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 12px;">
+                    <button type="button" id="btnShift1" onclick="selectModalShift('1')" style="padding: 8px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">1 смена</button>
+                    <button type="button" id="btnShift2" onclick="selectModalShift('2')" style="padding: 8px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">2 смена</button>
+                    <button type="button" id="btnShift3" onclick="selectModalShift('3')" style="padding: 8px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 11px; font-weight: bold; cursor: pointer;">3 смена</button>
+                    <button type="button" id="btnShiftNone" onclick="selectModalShift('none')" style="padding: 8px 2px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #71717a; font-size: 10px; font-weight: bold; cursor: pointer;">Выходной</button>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
                     <div>
-                        <label style="font-size: 12px; color: #71717a; font-weight: 500; display: block; margin-bottom: 4px;">Начало:</label>
+                        <label style="font-size: 11px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;">Начало:</label>
                         <input type="time" id="modalStart" value="06:00" onchange="recalculateModalHours()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="font-size: 12px; color: #71717a; font-weight: 500; display: block; margin-bottom: 4px;">Конец:</label>
+                        <label style="font-size: 11px; color: #71717a; font-weight: 500; display: block; margin-bottom: 3px;">Конец:</label>
                         <input type="time" id="modalEnd" value="14:00" onchange="recalculateModalHours()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
                     </div>
                 </div>
 
-                <div id="modalStatsInfo" style="background: #f4f4f5; padding: 10px; border-radius: 6px; font-size: 12px; text-align: center; color: #3f3f46; margin-bottom: 20px; font-weight: 500;">
+                <div id="modalStatsInfo" style="background: #f4f4f5; padding: 8px; border-radius: 6px; font-size: 11px; text-align: center; color: #3f3f46; margin-bottom: 15px; font-weight: 500;">
                     Всего: 8h | База: 8h | Nadg: 0h | Noc: 0.0h
                 </div>
 
-                <button onclick="saveDayModal()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Применить</button>
+                <button onclick="saveDayModal()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; box-sizing: border-box;">Применить</button>
             </div>
         </div>
     `;
@@ -340,7 +357,7 @@ function updateSettingsFromUI() {
     
     const labelElem = document.getElementById('labelRateName');
     if (labelElem) {
-        labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка в час нетто (zł):' : 'Оклад брутто (zł):';
+        labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка час (нетто):' : 'Оклад брутто (zł):';
     }
 
     saveSettingsToServer();
@@ -354,7 +371,7 @@ function renderCalendarGrid() {
 
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     
-    let html = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 600; margin-bottom: 8px;">
+    let html = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 600; margin-bottom: 6px;">
         <div style="color: #71717a;">Пн</div>
         <div style="color: #71717a;">Вт</div>
         <div style="color: #71717a;">Ср</div>
@@ -362,7 +379,7 @@ function renderCalendarGrid() {
         <div style="color: #71717a;">Пт</div>
         <div style="color: #dc2626;">Сб</div>
         <div style="color: #dc2626;">Вс</div>
-    </div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">`;
+    </div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;">`;
 
     let firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
     firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
@@ -388,11 +405,11 @@ function renderCalendarGrid() {
         let dayNumberColor = '#18181b';
 
         if (s.shift === '1') {
-            bgStyle = '#eff6ff'; borderStyle = '#bfdbfe'; badgeBg = '#dbeafe'; badgeColor = '#1d4ed8'; badgeText = '1 смена';
+            bgStyle = '#eff6ff'; borderStyle = '#bfdbfe'; badgeBg = '#dbeafe'; badgeColor = '#1d4ed8'; badgeText = '1 см';
         } else if (s.shift === '2') {
-            bgStyle = '#fff7ed'; borderStyle = '#fed7aa'; badgeBg = '#ffedd5'; badgeColor = '#c2410c'; badgeText = '2 смена';
+            bgStyle = '#fff7ed'; borderStyle = '#fed7aa'; badgeBg = '#ffedd5'; badgeColor = '#c2410c'; badgeText = '2 см';
         } else if (s.shift === '3') {
-            bgStyle = '#f5f3ff'; borderStyle = '#ddd6fe'; badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; badgeText = '3 смена';
+            bgStyle = '#f5f3ff'; borderStyle = '#ddd6fe'; badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; badgeText = '3 см';
         }
 
         if (isWeekend || isHoliday) {
@@ -405,9 +422,9 @@ function renderCalendarGrid() {
         }
 
         html += `
-            <div onclick="openDayModal(${day})" title="${holidayName ? 'Święto: ' + holidayName : (isWeekend ? 'Wolne (Weekend)' : '')}" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 6px; padding: 6px 2px; text-align: center; cursor: pointer; min-height: 55px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;">
-                <div style="font-size: 12px; font-weight: bold; color: ${dayNumberColor};">${day}</div>
-                <div style="font-size: 9px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 4px; padding: 2px 1px; font-weight: 500;">${badgeText}</div>
+            <div onclick="openDayModal(${day})" title="${holidayName ? 'Święto: ' + holidayName : (isWeekend ? 'Wolne (Weekend)' : '')}" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 5px; padding: 4px 1px; text-align: center; cursor: pointer; min-height: 50px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+                <div style="font-size: 11px; font-weight: bold; color: ${dayNumberColor};">${day}</div>
+                <div style="font-size: 8px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 3px; padding: 2px 0px; font-weight: 500; overflow: hidden; text-overflow: ellipsis;">${badgeText}</div>
             </div>
         `;
     }
@@ -587,7 +604,6 @@ async function loadSettings() {
                 manualKantyna: data.manual_kantyna || 0
             };
             
-            // Синхронизируем инпуты на экране с загруженными настройками
             const calcTypeSelect = document.getElementById('calcType');
             if (calcTypeSelect) calcTypeSelect.value = userSettings.calcType;
 
@@ -599,7 +615,7 @@ async function loadSettings() {
 
             const labelElem = document.getElementById('labelRateName');
             if (labelElem) {
-                labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка в час нетто (zł):' : 'Оклад брутто (zł):';
+                labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка час (нетто):' : 'Оклад брутто (zł):';
             }
 
             showMainScreen();
@@ -661,7 +677,7 @@ async function loadShifts() {
 async function saveAllData() {
     if (!currentUser) return;
     try {
-        await saveSettingsToServer(); // Принудительно сохраняем настройки (включая премию)
+        await saveSettingsToServer();
         await fetch('/shifts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
