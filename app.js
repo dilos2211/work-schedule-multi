@@ -29,7 +29,6 @@ const getThemeColors = (theme) => {
             shift1Bg: '#eff6ff', shift1Border: '#bfdbfe', shift1Text: '#1d4ed8',
             shift2Bg: '#fff7ed', shift2Border: '#fed7aa', shift2Text: '#c2410c',
             shift3Bg: '#f5f3ff', shift3Border: '#ddd6fe', shift3Text: '#6d28d9',
-            modalBg: '#ffffff', modalText: '#18181b', badgeBg: '#f4f4f5',
         };
     }
 };
@@ -634,7 +633,7 @@ function calculateStats() {
     let totalHoursAll = 0;
     let calculatedMoney = 0;
 
-    // Считаем общую норму рабочих часов месяца (Пн-Пт без праздников * 8)
+    // Считаем норму рабочих часов месяца (Пн-Пт без праздников * 8)
     let standardMonthHours = 0;
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     for (let day = 1; day <= daysInMonth; day++) {
@@ -647,7 +646,6 @@ function calculateStats() {
         }
     }
 
-    // Собираем отработанные часы и распределяем переработки по дням
     let accumulatedTotalHours = 0;
     
     Object.entries(scheduleData).forEach(([dayStr, s]) => {
@@ -660,7 +658,7 @@ function calculateStats() {
     let totalOvertimeAll = Math.max(0, accumulatedTotalHours - standardMonthHours);
     let totalBaseH = Math.min(accumulatedTotalHours, standardMonthHours);
 
-    // Автоматическое распределение сверх нормы
+    // Автоматическое распределение сверхурочных часов
     let manualH50 = 0;
     let manualH100 = 0;
     let hasManualOvertimeConfig = false;
@@ -696,7 +694,7 @@ function calculateStats() {
             }
         });
 
-        // Остальное (переработки в будни) -> +50%
+        // Остальное -> +50%
         if (remainingOvertime > 0) {
             autoOvertime50 += remainingOvertime;
         }
@@ -705,20 +703,19 @@ function calculateStats() {
     totalHoursAll = accumulatedTotalHours;
     let totalNightH = 0;
 
-    // Расчет денег с учетом оклада, премии и доплат за переработки
+    // Расчет по формуле:
+    // Брутто = ((Оклад / Норма часов в месяце) * Все отработанные часы) + Премия + Доплаты за переработки (+50% / +100%)
     if (userSettings.calcType === 'hourly') {
         calculatedMoney = totalHoursAll * (userSettings.rate || 0);
     } else {
         let baseMonthly = (userSettings.monthlyRate || 0);
-        
-        // Часовая ставка для надбавок из расчета месячного оклада и нормы часов месяца
         let hourlyRateFromMonthly = standardMonthHours > 0 ? (baseMonthly / standardMonthHours) : 0;
         
-        // Доплаты за сверхурочные сверх оклада (+50% и +100%)
+        let baseEarnedFromHours = hourlyRateFromMonthly * totalHoursAll;
         let overtimeBonus50Money = autoOvertime50 * (hourlyRateFromMonthly * 0.5);
         let overtimeBonus100Money = autoOvertime100 * (hourlyRateFromMonthly * 1.0);
         
-        calculatedMoney = baseMonthly + overtimeBonus50Money + overtimeBonus100Money;
+        calculatedMoney = baseEarnedFromHours + overtimeBonus50Money + overtimeBonus100Money;
     }
 
     // Общая премия + индивидуальные бонусы за дни
