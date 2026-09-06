@@ -13,57 +13,23 @@ let currentTheme = localStorage.getItem('app_theme') || 'light';
 const getThemeColors = (theme) => {
     if (theme === 'dark') {
         return {
-            bg: '#121212',
-            cardBg: '#1e1e1e',
-            text: '#e0e0e0',
-            textSecondary: '#a0a0a0',
-            border: '#333333',
-            inputBg: '#2a2a2a',
-            inputBorder: '#444444',
-            accent: '#3b82f6',
-            gridBg: '#181818',
-            dayBg: '#1e1e1e',
-            dayBorder: '#333333',
-            dayText: '#e0e0e0',
-            shift1Bg: '#1e3a8a',
-            shift1Border: '#3b82f6',
-            shift1Text: '#93c5fd',
-            shift2Bg: '#7c2d12',
-            shift2Border: '#f97316',
-            shift2Text: '#fdba74',
-            shift3Bg: '#581c87',
-            shift3Border: '#8b5cf6',
-            shift3Text: '#c4b5fd',
-            modalBg: '#1e1e1e',
-            modalText: '#e0e0e0',
-            badgeBg: '#2a2a2a',
+            bg: '#121212', cardBg: '#1e1e1e', text: '#e0e0e0', textSecondary: '#a0a0a0',
+            border: '#333333', inputBg: '#2a2a2a', inputBorder: '#444444', accent: '#3b82f6',
+            gridBg: '#181818', dayBg: '#1e1e1e', dayBorder: '#333333', dayText: '#e0e0e0',
+            shift1Bg: '#1e3a8a', shift1Border: '#3b82f6', shift1Text: '#93c5fd',
+            shift2Bg: '#7c2d12', shift2Border: '#f97316', shift2Text: '#fdba74',
+            shift3Bg: '#581c87', shift3Border: '#8b5cf6', shift3Text: '#c4b5fd',
+            modalBg: '#1e1e1e', modalText: '#e0e0e0', badgeBg: '#2a2a2a',
         };
     } else {
         return {
-            bg: '#f4f4f5',
-            cardBg: '#ffffff',
-            text: '#18181b',
-            textSecondary: '#71717a',
-            border: '#d4d4d8',
-            inputBg: '#ffffff',
-            inputBorder: '#d4d4d8',
-            accent: '#2563eb',
-            gridBg: '#fafafa',
-            dayBg: '#ffffff',
-            dayBorder: '#d4d4d8',
-            dayText: '#18181b',
-            shift1Bg: '#eff6ff',
-            shift1Border: '#bfdbfe',
-            shift1Text: '#1d4ed8',
-            shift2Bg: '#fff7ed',
-            shift2Border: '#fed7aa',
-            shift2Text: '#c2410c',
-            shift3Bg: '#f5f3ff',
-            shift3Border: '#ddd6fe',
-            shift3Text: '#6d28d9',
-            modalBg: '#ffffff',
-            modalText: '#18181b',
-            badgeBg: '#f4f4f5',
+            bg: '#f4f4f5', cardBg: '#ffffff', text: '#18181b', textSecondary: '#71717a',
+            border: '#d4d4d8', inputBg: '#ffffff', inputBorder: '#d4d4d8', accent: '#2563eb',
+            gridBg: '#fafafa', dayBg: '#ffffff', dayBorder: '#d4d4d8', dayText: '#18181b',
+            shift1Bg: '#eff6ff', shift1Border: '#bfdbfe', shift1Text: '#1d4ed8',
+            shift2Bg: '#fff7ed', shift2Border: '#fed7aa', shift2Text: '#c2410c',
+            shift3Bg: '#f5f3ff', shift3Border: '#ddd6fe', shift3Text: '#6d28d9',
+            modalBg: '#ffffff', modalText: '#18181b', badgeBg: '#f4f4f5',
         };
     }
 };
@@ -102,20 +68,14 @@ function initApp() {
 window.toggleTheme = function() {
     currentTheme = currentTheme === 'light' ? 'dark' : 'light';
     localStorage.setItem('app_theme', currentTheme);
-    if (!currentUser) {
-        showAuthScreen();
-    } else {
-        showMainScreen();
-    }
+    if (!currentUser) showAuthScreen();
+    else showMainScreen();
 };
 
 window.toggleLanguage = function(lang) {
     setLang(lang);
-    if (!currentUser) {
-        showAuthScreen();
-    } else {
-        showMainScreen();
-    }
+    if (!currentUser) showAuthScreen();
+    else showMainScreen();
 };
 
 window.toggleAuthMode = function(e) {
@@ -129,7 +89,6 @@ window.handleAuth = async function(event) {
     const email = document.getElementById('authEmail').value;
     const password = document.getElementById('authPassword').value;
     const endpoint = isRegisterMode ? '/api/register' : '/api/login';
-
     const errBox = document.getElementById('errorMsg');
     errBox.style.display = 'none';
 
@@ -140,11 +99,7 @@ window.handleAuth = async function(event) {
             body: JSON.stringify({ email, password })
         });
         const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Ошибка авторизации');
-        }
-
+        if (!data.success) throw new Error(data.error || 'Помилка авторизації');
         setCurrentUser(data.user);
         location.reload();
     } catch (err) {
@@ -221,29 +176,26 @@ function showAuthScreen() {
     const lang = getLang();
     const appContainer = document.getElementById('app');
     const c = getThemeColors(currentTheme);
-    
     document.body.style.backgroundColor = c.bg;
     
     appContainer.innerHTML = `
         <div class="auth-container" style="display: flex; justify-content: center; align-items: center; min-height: 95vh; padding: 10px; box-sizing: border-box;">
-            <div class="auth-card" style="background: ${c.cardBg}; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; color: ${c.text}; box-sizing: border-box; border: 1px solid ${c.border};">
-                
+            <div class="auth-card" style="background: ${c.cardBg}; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; color: ${c.text}; border: 1px solid ${c.border};">
                 <div style="display: flex; justify-content: flex-end; gap: 5px; margin-bottom: 15px;">
                     <button onclick="toggleTheme()" style="background: ${c.badgeBg}; color: ${c.text}; border: 1px solid ${c.border}; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">${currentTheme === 'dark' ? '🌙' : '☀️'}</button>
                     <button onclick="toggleLanguage('pl')" style="background: ${lang === 'pl' ? c.accent : c.badgeBg}; color: ${lang === 'pl' ? '#fff' : c.text}; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">PL</button>
                     <button onclick="toggleLanguage('uk')" style="background: ${lang === 'uk' ? c.accent : c.badgeBg}; color: ${lang === 'uk' ? '#fff' : c.text}; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">UA</button>
                 </div>
-
                 <h2 style="margin-top: 0; text-align: center; color: ${c.text};">${isRegisterMode ? t('registerTitle') : t('loginTitle')}</h2>
                 <div id="errorMsg" class="error-msg" style="display:none; color:#dc2626; margin-bottom:10px; font-size: 14px;"></div>
                 <form id="authForm" onsubmit="handleAuth(event)">
                     <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500; color: ${c.text};">${t('emailLabel')}</label>
-                        <input type="email" id="authEmail" required style="width: 100%; padding: 10px; border: 1px solid ${c.inputBorder}; background: ${c.inputBg}; color: ${c.text}; border-radius: 6px; box-sizing: border-box; font-size: 14px;">
+                        <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500;">${t('emailLabel')}</label>
+                        <input type="email" id="authEmail" required style="width: 100%; padding: 10px; border: 1px solid ${c.inputBorder}; background: ${c.inputBg}; color: ${c.text}; border-radius: 6px;">
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500; color: ${c.text};">${t('passwordLabel')}</label>
-                        <input type="password" id="authPassword" required style="width: 100%; padding: 10px; border: 1px solid ${c.inputBorder}; background: ${c.inputBg}; color: ${c.text}; border-radius: 6px; box-sizing: border-box; font-size: 14px;">
+                        <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500;">${t('passwordLabel')}</label>
+                        <input type="password" id="authPassword" required style="width: 100%; padding: 10px; border: 1px solid ${c.inputBorder}; background: ${c.inputBg}; color: ${c.text}; border-radius: 6px;">
                     </div>
                     <button type="submit" style="width: 100%; background: ${c.accent}; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px;">${isRegisterMode ? t('registerBtn') : t('loginBtn')}</button>
                 </form>
@@ -328,7 +280,8 @@ function showMainScreen() {
                 <div style="background: ${c.gridBg}; border: 1px solid ${c.border}; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 13px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: ${c.textSecondary};">${t('statDays')}</span> <strong id="statDays" style="color: ${c.text};">0</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: ${c.textSecondary};">${t('statBaseHours')}</span> <strong id="statBaseHours" style="color: ${c.text};">0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: ${c.textSecondary};">${t('statOvertime')}</span> <strong id="statOvertime" style="color: #d97706;">0.0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: ${c.textSecondary};">${t('statOvertime')} (+50%)</span> <strong id="statOvertime50" style="color: #d97706;">0.0 ч</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: ${c.textSecondary};">Переробка (+100%)</span> <strong id="statOvertime100" style="color: #dc2626;">0.0 ч</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="color: ${c.textSecondary};">${t('statNight')}</span> <strong id="statNight" style="color: #7c3aed;">0.0 ч</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px; border-top: 1px solid ${c.border}; padding-top: 5px;"><span style="color: ${c.textSecondary};">${t('statTotalHours')}</span> <strong id="statTotalHours" style="color: ${c.text};">0.0 ч</strong></div>
                     <div style="display: flex; justify-content: space-between; font-size: 15px; border-top: 1px solid ${c.border}; padding-top: 5px; margin-top: 5px; color: ${c.accent};"><span>${t('statTotalMoney')}:</span> <strong id="statTotalMoney">0.00 zł</strong></div>
@@ -345,7 +298,6 @@ function showMainScreen() {
                     <h3 style="margin-top: 0; color: ${c.text}; font-size: 16px; margin-bottom: 6px;">${t('salaryViewTitle')}</h3>
                     <p style="color: ${c.textSecondary}; font-size: 12px; line-height: 1.4; margin-bottom: 12px;">${t('salaryViewDesc')}</p>
                     
-                    <!-- Блок расчетов Netto на базе общего брутто месяца -->
                     <div style="background: ${c.cardBg}; border: 1px solid ${c.border}; padding: 12px; border-radius: 8px;">
                         <div style="font-size: 13px; font-weight: bold; color: ${c.accent}; margin-bottom: 10px; border-bottom: 1px solid ${c.border}; padding-bottom: 6px;">
                             ${t('salaryHeader')}
@@ -368,7 +320,6 @@ function showMainScreen() {
                             <strong id="salaryTabTax" style="color: #dc2626;">- 0.00 zł</strong>
                         </div>
                         
-                        <!-- Итоговая чистая зарплата -->
                         <div style="display: flex; justify-content: space-between; font-size: 15px; border-top: 2px solid ${c.border}; padding-top: 8px; margin-top: 8px; color: #16a34a;">
                             <span><strong>${t('nettoFinalLabel')}</strong></span>
                             <strong id="salaryTabNetto">0.00 zł</strong>
@@ -473,17 +424,12 @@ function updateSaveStatusUI() {
     ['saveStatusBadge', 'saveStatusBadgeSettings'].forEach(id => {
         const badge = document.getElementById(id);
         if (!badge) return;
-
         badge.style.display = 'block';
         if (hasUnsavedChanges) {
-            badge.style.background = '#fef3c7';
-            badge.style.color = '#d97706';
-            badge.style.border = '1px solid #fde68a';
+            badge.style.background = '#fef3c7'; badge.style.color = '#d97706'; badge.style.border = '1px solid #fde68a';
             badge.innerText = t('unsavedBadge');
         } else {
-            badge.style.background = '#dcfce7';
-            badge.style.color = '#16a34a';
-            badge.style.border = '1px solid #bbf7d0';
+            badge.style.background = '#dcfce7'; badge.style.color = '#16a34a'; badge.style.border = '1px solid #bbf7d0';
             badge.innerText = t('savedBadge');
         }
     });
@@ -508,12 +454,10 @@ function renderCalendarGrid() {
     let firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
     firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
 
-    for (let i = 0; i < firstDayIndex; i++) {
-        html += `<div></div>`;
-    }
+    for (let i = 0; i < firstDayIndex; i++) html += `<div></div>`;
 
     for (let day = 1; day <= daysInMonth; day++) {
-        const s = scheduleData[day] || { shift: 'none', totalHours: 0, overtime: 0 };
+        const s = scheduleData[day] || { shift: 'none', totalHours: 0 };
         
         let dateObj = new Date(currentYear, currentMonth, day);
         let dayOfWeek = dateObj.getDay();
@@ -529,18 +473,11 @@ function renderCalendarGrid() {
         let dayNumberColor = c.dayText;
 
         if (s.shift === '1') {
-            bgStyle = c.shift1Bg; borderStyle = c.shift1Border; badgeBg = c.shift1Border; badgeColor = c.shift1Text; 
-            badgeText = `${s.totalHours || 8}h`;
+            bgStyle = c.shift1Bg; borderStyle = c.shift1Border; badgeBg = c.shift1Border; badgeColor = c.shift1Text; badgeText = `${s.totalHours || 8}h`;
         } else if (s.shift === '2') {
-            bgStyle = c.shift2Bg; borderStyle = c.shift2Border; badgeBg = c.shift2Border; badgeColor = c.shift2Text; 
-            badgeText = `${s.totalHours || 8}h`;
+            bgStyle = c.shift2Bg; borderStyle = c.shift2Border; badgeBg = c.shift2Border; badgeColor = c.shift2Text; badgeText = `${s.totalHours || 8}h`;
         } else if (s.shift === '3') {
-            bgStyle = c.shift3Bg; borderStyle = c.shift3Border; badgeBg = c.shift3Border; badgeColor = c.shift3Text; 
-            badgeText = `${s.totalHours || 8}h`;
-        }
-
-        if (s.overtime && s.overtime > 0) {
-            badgeText = `${s.totalHours}h (+${s.overtime})`;
+            bgStyle = c.shift3Bg; borderStyle = c.shift3Border; badgeBg = c.shift3Border; badgeColor = c.shift3Text; badgeText = `${s.totalHours || 8}h`;
         }
 
         if (isWeekend || isHoliday) {
@@ -553,7 +490,7 @@ function renderCalendarGrid() {
 
         let holidayHtml = '';
         if (isHoliday) {
-            holidayHtml = `<div style="font-size: 7.5px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.1;" title="${holidayName}">${holidayName}</div>`;
+            holidayHtml = `<div style="font-size: 7.5px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${holidayName}">${holidayName}</div>`;
         }
 
         const tooltipTitle = holidayName ? (t('tooltipHoliday') + holidayName) : (isWeekend ? t('tooltipWeekend') : '');
@@ -592,7 +529,6 @@ window.openDayModal = function(day) {
     
     updateModalShiftButtons();
     window.recalculateModalHours();
-    
     document.getElementById('dayModal').style.display = 'flex';
 };
 
@@ -622,13 +558,9 @@ function updateModalShiftButtons() {
         const btn = document.getElementById(type === 'none' ? 'btnShiftNone' : `btnShift${type}`);
         if (!btn) return;
         if (currentModalShift === type) {
-            btn.style.background = c.accent;
-            btn.style.color = '#ffffff';
-            btn.style.borderColor = c.accent;
+            btn.style.background = c.accent; btn.style.color = '#ffffff'; btn.style.borderColor = c.accent;
         } else {
-            btn.style.background = c.inputBg;
-            btn.style.color = type === 'none' ? c.textSecondary : c.text;
-            btn.style.borderColor = c.inputBorder;
+            btn.style.background = c.inputBg; btn.style.color = type === 'none' ? c.textSecondary : c.text; btn.style.borderColor = c.inputBorder;
         }
     });
 }
@@ -636,21 +568,15 @@ function updateModalShiftButtons() {
 window.recalculateModalHours = function() {
     const startStr = document.getElementById('modalStart').value;
     const endStr = document.getElementById('modalEnd').value;
-    
     if (!startStr || !endStr) return;
 
     let [startH, startM] = startStr.split(':').map(Number);
     let [endH, endM] = endStr.split(':').map(Number);
-
     let startMinutes = startH * 60 + startM;
     let endMinutes = endH * 60 + endM;
+    if (endMinutes <= startMinutes) endMinutes += 24 * 60;
 
-    if (endMinutes <= startMinutes) {
-        endMinutes += 24 * 60;
-    }
-
-    let diffMinutes = endMinutes - startMinutes;
-    let totalH = diffMinutes / 60;
+    let totalH = (endMinutes - startMinutes) / 60;
     let baseH = Math.min(totalH, 8);
     let nadgH = Math.max(0, totalH - 8);
 
@@ -674,7 +600,6 @@ window.saveDayModal = function() {
     if (endMinutes <= startMinutes) endMinutes += 24 * 60;
     
     let totalH = (endMinutes - startMinutes) / 60;
-    let nadgH = Math.max(0, totalH - 8);
 
     if (currentModalShift === 'none' && totalH === 0 && h50 === 0 && h100 === 0 && bZl === 0) {
         delete scheduleData[selectedDayForModal];
@@ -684,7 +609,6 @@ window.saveDayModal = function() {
             start: startStr,
             end: endStr,
             totalHours: totalH,
-            overtime: nadgH,
             hours50: h50,
             hours100: h100,
             bonusZl: bZl
@@ -710,15 +634,7 @@ function calculateStats() {
     let totalHoursAll = 0;
     let calculatedMoney = 0;
 
-    // Считаем общее количество отработанных дней и часов за месяц
-    Object.values(scheduleData).forEach(s => {
-        if (s.shift && s.shift !== 'none') {
-            totalDays++;
-            totalHoursAll += (s.totalHours || 0);
-        }
-    });
-
-    // Автоматический расчет стандартной нормы часов месяца (Пн-Пт без праздников * 8)
+    // Считаем общую норму рабочих часов месяца (Пн-Пт без праздников * 8)
     let standardMonthHours = 0;
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     for (let day = 1; day <= daysInMonth; day++) {
@@ -731,9 +647,66 @@ function calculateStats() {
         }
     }
 
-    // Базовые часы не могут превышать месячную норму, а всё сверху — это наддурочные (переработка)
-    let totalBaseH = Math.min(totalHoursAll, standardMonthHours);
-    let totalOvertimeH = Math.max(0, totalHoursAll - standardMonthHours);
+    // Собираем отработанные часы и распределяем переработки по дням
+    let accumulatedTotalHours = 0;
+    
+    // Сначала посчитаем суммарно отработанные часы по всем дням
+    Object.entries(scheduleData).forEach(([dayStr, s]) => {
+        if (s.shift && s.shift !== 'none') {
+            totalDays++;
+            accumulatedTotalHours += (s.totalHours || 0);
+        }
+    });
+
+    let totalOvertimeAll = Math.max(0, accumulatedTotalHours - standardMonthHours);
+    let totalBaseH = Math.min(accumulatedTotalHours, standardMonthHours);
+
+    // Автоматическое распределение сверх нормы:
+    // Если пользователь вручную указал 50% или 100% в днях — берем оттуда, иначе раскидываем автоматически
+    let manualH50 = 0;
+    let manualH100 = 0;
+    let hasManualOvertimeConfig = false;
+
+    Object.values(scheduleData).forEach(s => {
+        if (s.hours50) manualH50 += s.hours50;
+        if (s.hours100) manualH100 += s.hours100;
+        if (s.hours50 || s.hours100) hasManualOvertimeConfig = true;
+    });
+
+    let autoOvertime50 = 0;
+    let autoOvertime100 = 0;
+
+    if (hasManualOvertimeConfig) {
+        autoOvertime50 = manualH50;
+        autoOvertime100 = manualH100;
+    } else {
+        // Автоматика: проходим по дням и распределяем общую переработку
+        // Выходные и праздники -> +100%, Будни (сверх 8 часов) -> +50%
+        let remainingOvertime = totalOvertimeAll;
+
+        // Сначала распределяем переработки выходных/праздников в +100%
+        Object.entries(scheduleData).forEach(([dayStr, s]) => {
+            if (remainingOvertime <= 0) return;
+            let dayNum = parseInt(dayStr);
+            let dateObj = new Date(currentYear, currentMonth, dayNum);
+            let dayOfWeek = dateObj.getDay();
+            let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+            let holidayName = getHolidayName(currentYear, currentMonth, dayNum);
+
+            if ((isWeekend || holidayName) && s.totalHours > 0) {
+                let take = Math.min(remainingOvertime, s.totalHours);
+                autoOvertime100 += take;
+                remainingOvertime -= take;
+            }
+        });
+
+        // Остальное (переработки в будни) уходит в +50%
+        if (remainingOvertime > 0) {
+            autoOvertime50 += remainingOvertime;
+        }
+    }
+
+    totalHoursAll = accumulatedTotalHours;
     let totalNightH = 0;
 
     if (userSettings.calcType === 'hourly') {
@@ -743,28 +716,27 @@ function calculateStats() {
     }
 
     calculatedMoney += (userSettings.bonus || 0);
-
     Object.values(scheduleData).forEach(s => {
-        if (s.bonusZl) {
-            calculatedMoney += s.bonusZl;
-        }
+        if (s.bonusZl) calculatedMoney += s.bonusZl;
     });
 
     const elDays = document.getElementById('statDays');
     const elBase = document.getElementById('statBaseHours');
-    const elOver = document.getElementById('statOvertime');
+    const elOver50 = document.getElementById('statOvertime50');
+    const elOver100 = document.getElementById('statOvertime100');
     const elNight = document.getElementById('statNight');
     const elTotalH = document.getElementById('statTotalHours');
     const elTotalM = document.getElementById('statTotalMoney');
 
     if (elDays) elDays.innerText = totalDays;
     if (elBase) elBase.innerText = `${totalBaseH.toFixed(1)} ч`;
-    if (elOver) elOver.innerText = `${totalOvertimeH.toFixed(1)} ч`;
+    if (elOver50) elOver50.innerText = `${autoOvertime50.toFixed(1)} ч`;
+    if (elOver100) elOver100.innerText = `${autoOvertime100.toFixed(1)} ч`;
     if (elNight) elNight.innerText = `${totalNightH.toFixed(1)} ч`;
     if (elTotalH) elTotalH.innerText = `${totalHoursAll.toFixed(1)} ч`;
     if (elTotalM) elTotalM.innerText = `${calculatedMoney.toFixed(2)} zł`;
 
-    // Динамический расчёт налогов и итоговой суммы Netto на вкладке "Зарплата" на основе общей суммы брутто за месяц
+    // Расчёт налогов Netto
     const totalBrutto = calculatedMoney;
     const zusWorkers = totalBrutto * 0.1166;
     const healthBase = totalBrutto - zusWorkers;
