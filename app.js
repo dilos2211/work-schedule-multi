@@ -20,6 +20,64 @@ const monthNames = [
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
 ];
 
+// Список фиксированных польских праздников (месяц 0-11, день)
+const polishHolidaysFixed = [
+    { m: 0, d: 1, name: "Nowy Rok" },
+    { m: 0, d: 6, name: "Trzech Króli" },
+    { m: 4, d: 1, name: "Święto Pracy" },
+    { m: 4, d: 3, name: "Święto Konstytucji 3 Maja" },
+    { m: 7, d: 15, name: "Wniebowzięcie NMP" },
+    { m: 10, d: 1, name: "Wszystkich Świętych" },
+    { m: 10, d: 11, name: "Święto Niepodległości" },
+    { m: 11, d: 25, name: "Boże Narodzenie" },
+    { m: 11, d: 26, name: "Drugi dzień Bożego Narodzenia" }
+];
+
+// Функция расчета Пасхи и переходящих праздников в Польше (Великоднее воскресенье, Понедельник, Божье Тело)
+function getPolishFloatingHolidays(year) {
+    let a = year % 19,
+        b = Math.floor(year / 100),
+        c = year % 100,
+        d = Math.floor(b / 4),
+        e = b % 4,
+        f = Math.floor((b + 8) / 25),
+        g = Math.floor((b - f + 1) / 3),
+        h = (19 * a + b - d - g + 15) % 30,
+        i = Math.floor(c / 4),
+        k = c % 4,
+        l = (32 + 2 * e + 2 * i - h - k) % 7,
+        m = Math.floor((a + 11 * h + 22 * l) / 451),
+        month = Math.floor((h + l - 7 * m + 114) / 31) - 1,
+        day = ((h + l - 7 * m + 114) % 31) + 1;
+
+    let easterDate = new Date(year, month, day);
+    
+    // Пасхальный понедельник (+1 день)
+    let easterMonday = new Date(easterDate);
+    easterMonday.setDate(easterDate.getDate() + 1);
+
+    // Зеленые святки (Zesłanie Ducha Świętego / Zielone Świątki) (+49 дней)
+    let pentecost = new Date(easterDate);
+    pentecost.setDate(easterDate.getDate() + 49);
+
+    // Божье Тело (Boże Ciało) (+60 дней)
+    let corpusChristi = new Date(easterDate);
+    corpusChristi.setDate(easterDate.getDate() + 60);
+
+    return [
+        { m: easterMonday.getMonth(), d: easterMonday.getDate(), name: "Poniedziałek Wielkanocny" },
+        { m: pentecost.getMonth(), d: pentecost.getDate(), name: "Zielone Świątki" },
+        { m: corpusChristi.getMonth(), d: corpusChristi.getDate(), name: "Boże Ciało" }
+    ];
+}
+
+// Проверка, является ли день официальным праздником в Польше
+function getHolidayName(year, month, day) {
+    let holidays = [...polishHolidaysFixed, ...getPolishFloatingHolidays(year)];
+    let found = holidays.find(h => h.m === month && h.d === day);
+    return found ? found.name : null;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
@@ -34,7 +92,7 @@ function initApp() {
     }
 }
 
-// --- ЭКРАН АВТОРИЗАЦИИ (СВЕТЛАЯ ТЕМА) ---
+// --- ЭКРАН АВТОРИЗАЦИИ ---
 
 function showAuthScreen() {
     document.body.style.backgroundColor = "#f4f4f5";
@@ -109,14 +167,13 @@ function logout() {
     location.reload();
 }
 
-// --- ГЛАВНЫЙ ЭКРАН (СВЕТЛАЯ ТЕМА) ---
+// --- ГЛАВНЫЙ ЭКРАН ---
 
 function showMainScreen() {
     document.body.style.backgroundColor = "#f4f4f5";
     document.body.innerHTML = `
         <div class="main-wrapper" style="max-width: 480px; margin: 20px auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             
-            <!-- Шапка с вкладками и кнопкой выхода -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <div style="display: flex; background: #f4f4f5; padding: 4px; border-radius: 8px;">
                     <button onclick="switchTab('calendar')" id="tabCalendar" style="background: ${activeTab === 'calendar' ? '#2563eb' : 'transparent'}; color: ${activeTab === 'calendar' ? '#ffffff' : '#71717a'}; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">📅 Календарь</button>
@@ -128,7 +185,6 @@ function showMainScreen() {
             <!-- Вкладка: Календарь -->
             <div id="viewCalendar" style="display: ${activeTab === 'calendar' ? 'block' : 'none'};">
                 
-                <!-- Выбор месяца и года -->
                 <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
                     <div>
                         <label style="font-size: 12px; color: #71717a; font-weight: 500;">Месяц:</label>
@@ -146,7 +202,6 @@ function showMainScreen() {
                     </div>
                 </div>
 
-                <!-- Настройки оплаты -->
                 <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
                     <div style="margin-bottom: 8px;">
                         <label style="font-size: 12px; color: #71717a; font-weight: 500;">Тип оплаты:</label>
@@ -183,7 +238,7 @@ function showMainScreen() {
                 <button onclick="saveShiftsToServer(); alert('Отчет успешно сохранен!');" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Сохранить отчет</button>
             </div>
 
-            <!-- Вкладка: Расчет зарплаты -->
+            <!-- Вкладка: Зарплата -->
             <div id="viewSalary" style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: #fafafa; border: 1px solid #e4e4e7; padding: 15px; border-radius: 8px;">
                 <h3 style="margin-top: 0; color: #18181b;">Детализация расчета</h3>
                 <p style="color: #71717a; font-size: 14px; line-height: 1.5;">Здесь отображаются подробные начисления по часам, надбавки за ночные смены и праздничные дни согласно вашему графику.</p>
@@ -191,18 +246,16 @@ function showMainScreen() {
 
         </div>
 
-        <!-- Модальное окно редактирования дня (как на вашем скриншоте) -->
+        <!-- Модальное окно редактирования дня -->
         <div id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 1000;">
             <div style="background: #ffffff; padding: 20px; border-radius: 12px; width: 90%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b; position: relative;">
                 
-                <!-- Крестик закрытия -->
                 <button onclick="closeDayModal()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 18px; cursor: pointer; color: #71717a;">✕</button>
 
                 <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 15px; font-size: 18px; font-weight: bold;">1 Сентябрь</h3>
                 
                 <div style="font-size: 13px; color: #71717a; margin-bottom: 8px; font-weight: 500;">Быстрый выбор смены:</div>
                 
-                <!-- Кнопки быстрого выбора смен -->
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px;">
                     <button type="button" id="btnShift1" onclick="selectModalShift('1')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 12px; font-weight: bold; cursor: pointer;">1 смена</button>
                     <button type="button" id="btnShift2" onclick="selectModalShift('2')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 12px; font-weight: bold; cursor: pointer;">2 смена</button>
@@ -210,7 +263,6 @@ function showMainScreen() {
                     <button type="button" id="btnShiftNone" onclick="selectModalShift('none')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #71717a; font-size: 11px; font-weight: bold; cursor: pointer;">Выходной</button>
                 </div>
 
-                <!-- Поля начала и конца -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                     <div>
                         <label style="font-size: 12px; color: #71717a; font-weight: 500; display: block; margin-bottom: 4px;">Начало:</label>
@@ -222,12 +274,10 @@ function showMainScreen() {
                     </div>
                 </div>
 
-                <!-- Строка информации по часам -->
                 <div id="modalStatsInfo" style="background: #f4f4f5; padding: 10px; border-radius: 6px; font-size: 12px; text-align: center; color: #3f3f46; margin-bottom: 20px; font-weight: 500;">
                     Всего: 8h | База: 8h | Nadg: 0h | Noc: 0.0h
                 </div>
 
-                <!-- Кнопка Применить -->
                 <button onclick="saveDayModal()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Применить</button>
             </div>
         </div>
@@ -237,7 +287,7 @@ function showMainScreen() {
     calculateStats();
 }
 
-// --- ЛОГИКА КАЛЕНДАРЯ И МОДАЛЬНОГО ОКНА ---
+// --- ЛОГИКА КАЛЕНДАРЯ И ПОДСВЕТКИ ВЫХОДНЫХ/ПРАЗДНИКОВ ---
 
 function switchTab(tab) {
     activeTab = tab;
@@ -258,15 +308,21 @@ function updateSettingsFromUI() {
     calculateStats();
 }
 
-// Отрисовка сетки дней месяца в светлом стиле
+// Отрисовка сетки дней месяца с подсветкой выходных (сб, вс) и гос. праздников Польши красным цветом
 function renderCalendarGrid() {
     const grid = document.getElementById('calendarGrid');
     if (!grid) return;
 
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     
-    let html = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: #71717a; font-weight: 600; margin-bottom: 8px;">
-        <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+    let html = `<div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 600; margin-bottom: 8px;">
+        <div style="color: #71717a;">Пн</div>
+        <div style="color: #71717a;">Вт</div>
+        <div style="color: #71717a;">Ср</div>
+        <div style="color: #71717a;">Чт</div>
+        <div style="color: #71717a;">Пт</div>
+        <div style="color: #dc2626;">Сб</div>
+        <div style="color: #dc2626;">Вс</div>
     </div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">`;
 
     let firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
@@ -278,12 +334,24 @@ function renderCalendarGrid() {
 
     for (let day = 1; day <= daysInMonth; day++) {
         const s = scheduleData[day] || { shift: 'none', totalHours: 0, overtime: 0 };
+        
+        // Определяем день недели (0 - Пн, ..., 5 - Сб, 6 - Вс)
+        let dateObj = new Date(currentYear, currentMonth, day);
+        let dayOfWeek = dateObj.getDay();
+        let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6); // Суббота или Воскресенье
+        
+        // Проверяем, польский ли это праздник
+        let holidayName = getHolidayName(currentYear, currentMonth, day);
+        let isHoliday = (holidayName !== null);
+
         let bgStyle = '#ffffff';
         let borderStyle = '#d4d4d8';
         let badgeBg = '#f4f4f5';
         let badgeColor = '#71717a';
         let badgeText = 'выходной';
+        let dayNumberColor = '#18181b';
 
+        // Если смена выбрана — приоритет цвета смены
         if (s.shift === '1') {
             bgStyle = '#eff6ff'; borderStyle = '#bfdbfe'; badgeBg = '#dbeafe'; badgeColor = '#1d4ed8'; badgeText = '1 смена';
         } else if (s.shift === '2') {
@@ -292,9 +360,19 @@ function renderCalendarGrid() {
             bgStyle = '#f5f3ff'; borderStyle = '#ddd6fe'; badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; badgeText = '3 смена';
         }
 
+        // Если день — выходной (суббота/воскресенье) или государственный праздник, подсвечиваем номер и рамку красным
+        if (isWeekend || isHoliday) {
+            dayNumberColor = '#dc2626'; // Красный цвет для числа
+            if (s.shift === 'none') {
+                borderStyle = '#fca5a5';
+                bgStyle = '#fef2f2'; // Легкий розово-красный фон для свободных выходных/праздников
+                if (isHoliday) badgeText = 'праздник';
+            }
+        }
+
         html += `
-            <div onclick="openDayModal(${day})" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 6px; padding: 6px 2px; text-align: center; cursor: pointer; min-height: 55px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;">
-                <div style="font-size: 12px; font-weight: bold; color: #18181b;">${day}</div>
+            <div onclick="openDayModal(${day})" title="${holidayName ? 'Święto: ' + holidayName : (isWeekend ? 'Wolne (Weekend)' : '')}" style="background: ${bgStyle}; border: 1px solid ${borderStyle}; border-radius: 6px; padding: 6px 2px; text-align: center; cursor: pointer; min-height: 55px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;">
+                <div style="font-size: 12px; font-weight: bold; color: ${dayNumberColor};">${day}</div>
                 <div style="font-size: 9px; background: ${badgeBg}; color: ${badgeColor}; border-radius: 4px; padding: 2px 1px; font-weight: 500;">${badgeText}</div>
             </div>
         `;
@@ -304,10 +382,8 @@ function renderCalendarGrid() {
     grid.innerHTML = html;
 }
 
-// Текущая выбранная смена в открытом модальном окне
 let currentModalShift = '1';
 
-// Открытие модального окна для настройки конкретного дня
 function openDayModal(day) {
     selectedDayForModal = day;
     const s = scheduleData[day] || { shift: '1', start: '06:00', end: '14:00' };
@@ -329,12 +405,10 @@ function closeDayModal() {
     selectedDayForModal = null;
 }
 
-// Выбор смены кликом по кнопке в модалке
 function selectModalShift(shiftType) {
     currentModalShift = shiftType;
     updateModalShiftButtons();
 
-    // Автоматически подставляем стандартное время в зависимости от смены
     if (shiftType === '1') {
         document.getElementById('modalStart').value = '06:00';
         document.getElementById('modalEnd').value = '14:00';
@@ -364,7 +438,6 @@ function updateModalShiftButtons() {
     });
 }
 
-// Расчет часов внутри модалки по времени начала и конца
 function recalculateModalHours() {
     const startStr = document.getElementById('modalStart').value;
     const endStr = document.getElementById('modalEnd').value;
@@ -378,7 +451,7 @@ function recalculateModalHours() {
     let endMinutes = endH * 60 + endM;
 
     if (endMinutes <= startMinutes) {
-        endMinutes += 24 * 60; // Переход через полночь (ночная смена)
+        endMinutes += 24 * 60;
     }
 
     let diffMinutes = endMinutes - startMinutes;
@@ -387,7 +460,6 @@ function recalculateModalHours() {
     let baseH = Math.min(totalH, 8);
     let nadgH = Math.max(0, totalH - 8);
 
-    // Расчет ночных часов (22:00 - 06:00)
     let nightH = 0;
     for (let m = startMinutes; m < endMinutes; m += 30) {
         let hourOfDay = Math.floor((m % (24 * 60)) / 60);
@@ -400,7 +472,6 @@ function recalculateModalHours() {
         `Всего: ${totalH}h | База: ${baseH}h | Nadg: ${nadgH}h | Noc: ${nightH.toFixed(1)}h`;
 }
 
-// Сохранение изменений из модального окна
 function saveDayModal() {
     if (selectedDayForModal === null) return;
     
@@ -433,7 +504,6 @@ function saveDayModal() {
     calculateStats();
 }
 
-// Расчет общей статистики внизу
 function calculateStats() {
     let daysWorked = 0;
     let totalHours = 0;
