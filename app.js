@@ -9,8 +9,8 @@ let selectedDayForModal = null;
 
 let userSettings = {
     calcType: 'monthly',
-    monthlyRate: 5500,
-    rate: 25, // Почасовая ставка по умолчанию
+    monthlyRate: 5500, // Месячная ставка брутто
+    rate: 25,          // Часовая ставка нетто
     bonus: 850,
     manualKantyna: 0
 };
@@ -202,17 +202,17 @@ function showMainScreen() {
                     <div style="margin-bottom: 8px;">
                         <label style="font-size: 12px; color: #71717a; font-weight: 500;">Тип оплаты:</label>
                         <select id="calcType" onchange="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px;">
-                            <option value="monthly" ${!isHourly ? 'selected' : ''}>Оклад за месяц (zł/мес)</option>
-                            <option value="hourly" ${isHourly ? 'selected' : ''}>Почасовая ставка (zł/ч)</option>
+                            <option value="monthly" ${!isHourly ? 'selected' : ''}>Оклад за месяц (брутто)</option>
+                            <option value="hourly" ${isHourly ? 'selected' : ''}>Почасовая ставка (нетто)</option>
                         </select>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
-                            <label style="font-size: 12px; color: #71717a; font-weight: 500;" id="labelRateName">${isHourly ? 'Ставка в час (zł):' : 'Оклад брутто (zł):'}</label>
+                            <label style="font-size: 12px; color: #71717a; font-weight: 500;" id="labelRateName">${isHourly ? 'Ставка в час нетто (zł):' : 'Оклад брутто (zł):'}</label>
                             <input type="number" id="inputRateValue" value="${isHourly ? userSettings.rate : userSettings.monthlyRate}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="font-size: 12px; color: #71717a; font-weight: 500;">Премия брутто (zł):</label>
+                            <label style="font-size: 12px; color: #71717a; font-weight: 500;">Премия (zł):</label>
                             <input type="number" id="inputBonus" value="${userSettings.bonus}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box;">
                         </div>
                     </div>
@@ -228,7 +228,7 @@ function showMainScreen() {
                     <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Переработка (Nadgodziny):</span> <strong id="statOvertime" style="color: #d97706;">0.0 ч</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span style="color: #71717a;">Ночные часы (22:00-06:00):</span> <strong id="statNight" style="color: #7c3aed;">0.0 ч</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 6px; border-top: 1px solid #e4e4e7; padding-top: 6px;"><span style="color: #71717a;">Всего часов:</span> <strong id="statTotalHours">0.0 ч</strong></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 16px; border-top: 1px solid #e4e4e7; padding-top: 6px; margin-top: 6px; color: #2563eb;"><span>Ориентировочно брутто:</span> <strong id="statTotalMoney">0.00 zł</strong></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; border-top: 1px solid #e4e4e7; padding-top: 6px; margin-top: 6px; color: #2563eb;"><span>Итого (${isHourly ? 'нетто' : 'брутто'}):</span> <strong id="statTotalMoney">0.00 zł</strong></div>
                 </div>
 
                 <button onclick="saveShiftsToServer(); alert('Отчет успешно сохранен!');" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Сохранить отчет</button>
@@ -308,10 +308,9 @@ function updateSettingsFromUI() {
     
     userSettings.bonus = parseFloat(document.getElementById('inputBonus').value) || 0;
     
-    // Динамически меняем текст подписи инпута в зависимости от выбора типа оплаты
     const labelElem = document.getElementById('labelRateName');
     if (labelElem) {
-        labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка в час (zł):' : 'Оклад брутто (zł):';
+        labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка в час нетто (zł):' : 'Оклад брутто (zł):';
     }
 
     saveSettingsToServer();
@@ -530,13 +529,12 @@ function calculateStats() {
     document.getElementById('statNight').innerText = `0.0 ч`;
     document.getElementById('statTotalHours').innerText = `${totalHours.toFixed(1)} ч`;
 
-    // Расчет общей суммы в зависимости от типа оплаты:
     let totalMoney = 0;
     if (userSettings.calcType === 'hourly') {
-        // Почасовая оплата: все отработанные часы умножаются на ставку в час + премия
+        // Почасовая ставка нетто * часы + премия
         totalMoney = (totalHours * userSettings.rate) + userSettings.bonus;
     } else {
-        // Оклад: фиксированный оклад + премия
+        // Месячная ставка брутто + премия
         totalMoney = userSettings.monthlyRate + userSettings.bonus;
     }
 
