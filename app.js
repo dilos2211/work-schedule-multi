@@ -6,6 +6,7 @@ let currentMonth = new Date().getMonth();
 let scheduleData = {};
 let activeTab = 'calendar';
 let selectedDayForModal = null;
+let hasUnsavedChanges = false; // Флаг наличия несохраненных изменений
 
 let userSettings = {
     calcType: 'monthly',
@@ -231,7 +232,10 @@ function showMainScreen() {
                     <div style="display: flex; justify-content: space-between; font-size: 16px; border-top: 1px solid #e4e4e7; padding-top: 6px; margin-top: 6px; color: #2563eb;"><span>Итого (${isHourly ? 'нетто' : 'брутто'}):</span> <strong id="statTotalMoney">0.00 zł</strong></div>
                 </div>
 
-                <button onclick="saveShiftsToServer(); alert('Отчет успешно сохранен!');" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Сохранить отчет</button>
+                <!-- Плашка статуса сохранения -->
+                <div id="saveStatusBadge" style="padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; text-align: center; margin-bottom: 10px; display: none;"></div>
+
+                <button onclick="saveAllData();" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Сохранить отчет</button>
             </div>
 
             <!-- Вкладка: Зарплата -->
@@ -281,6 +285,32 @@ function showMainScreen() {
 
     renderCalendarGrid();
     calculateStats();
+    updateSaveStatusUI();
+}
+
+// --- УПРАВЛЕНИЕ СТАТУСОМ СОХРАНЕНИЯ ---
+
+function setUnsaved() {
+    hasUnsavedChanges = true;
+    updateSaveStatusUI();
+}
+
+function updateSaveStatusUI() {
+    const badge = document.getElementById('saveStatusBadge');
+    if (!badge) return;
+
+    badge.style.display = 'block';
+    if (hasUnsavedChanges) {
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#d97706';
+        badge.style.border = '1px solid #fde68a';
+        badge.innerText = '⚠️ Данные нужно сохранить';
+    } else {
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#16a34a';
+        badge.style.border = '1px solid #bbf7d0';
+        badge.innerText = '✅ Данные сохранены';
+    }
 }
 
 // --- ЛОГИКА КАЛЕНДАРЯ И РАСЧЕТОВ ---
@@ -314,6 +344,7 @@ function updateSettingsFromUI() {
     }
 
     saveSettingsToServer();
+    setUnsaved();
     calculateStats();
 }
 
@@ -505,6 +536,7 @@ function saveDayModal() {
     closeDayModal();
     renderCalendarGrid();
     calculateStats();
+    setUnsaved();
 }
 
 function calculateStats() {
@@ -531,10 +563,8 @@ function calculateStats() {
 
     let totalMoney = 0;
     if (userSettings.calcType === 'hourly') {
-        // Почасовая ставка нетто * часы + премия
         totalMoney = (totalHours * userSettings.rate) + userSettings.bonus;
     } else {
-        // Месячная ставка брутто + премия
         totalMoney = userSettings.monthlyRate + userSettings.bonus;
     }
 
@@ -602,14 +632,16 @@ async function loadShifts() {
                 };
             });
         }
+        hasUnsavedChanges = false;
         renderCalendarGrid();
         calculateStats();
+        updateSaveStatusUI();
     } catch (e) {
         console.error('Ошибка загрузки смен:', e);
     }
 }
 
-async function saveShiftsToServer() {
+async function saveAllData() {
     if (!currentUser) return;
     try {
         await fetch('/shifts', {
@@ -622,7 +654,11 @@ async function saveShiftsToServer() {
                 scheduleData: scheduleData
             })
         });
+        hasUnsavedChanges = false;
+        updateSaveStatusUI();
+        alert('Отчет успешно сохранен!');
     } catch (e) {
         console.error('Ошибка сохранения смен:', e);
+        alert('Ошибка при сохранении отчета!');
     }
 }
