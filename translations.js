@@ -45,6 +45,16 @@ export const translations = {
         salaryViewTitle: "Szczegóły kalkulacji wynagrodzenia",
         salaryViewDesc: "Tutaj wyświetlane są szczegółowe naliczenia godzinowe, dodatki za zmiany nocne oraz dni świąteczne zgodnie z Twoim harmonogramem.",
         
+        salaryHeader: "Rozliczenie wynagrodzenia (Umowa o pracę)",
+        salaryBruttoLabel: "Wynagrodzenie Brutto:",
+        zusWorkersLabel: "Składki społeczne ZUS (11.66%):",
+        healthBaseLabel: "Podstawa składki zdrowotnej:",
+        healthInsLabel: "Składka zdrowotna (9%):",
+        taxBaseLabel: "Podstawa opodatkowania (PIT):",
+        taxAdvanceLabel: "Zaliczka na PIT (12% - kwota wolna):",
+        nettoFinalLabel: "Do wypłaty na konto (Netto):",
+        employerCostLabel: "Całkowity koszt pracodawcy (~):",
+        
         modalQuickShift: "Szybki wybór zmiany:",
         shift1Btn: "1 zmiana",
         shift2Btn: "2 zmiana",
@@ -57,7 +67,6 @@ export const translations = {
         bonusZlLabel: "Dodatek (zł):",
         applyBtn: "Zastosuj",
 
-        // Дополнительные UI-тексты, вынесенные из app.js
         themeCardTitle: "Wygląd",
         themeDarkActive: "Ciemny motyw włączony",
         themeLightActive: "Jasny motyw włączony",
@@ -123,6 +132,16 @@ export const translations = {
         salaryViewTitle: "Деталізація розрахунку зарплати",
         salaryViewDesc: "Тут відображаються детальні нарахування за години, доплати за нічні зміни та святкові дні згідно з вашим графіком.",
         
+        salaryHeader: "Розрахунок заробітної плати (Umowa o pracę)",
+        salaryBruttoLabel: "Оклад Брутто:",
+        zusWorkersLabel: "Соціальні внески ZUS (11.66%):",
+        healthBaseLabel: "База для медичного внеску:",
+        healthInsLabel: "Медичний внесок (9%):",
+        taxBaseLabel: "База оподаткування (PIT):",
+        taxAdvanceLabel: "Податок PIT (12% - пільга):",
+        nettoFinalLabel: "На руки (Netto):",
+        employerCostLabel: "Загальні витрати роботодавця (~):",
+        
         modalQuickShift: "Швидкий вибір зміни:",
         shift1Btn: "1 зміна",
         shift2Btn: "2 зміна",
@@ -135,7 +154,6 @@ export const translations = {
         bonusZlLabel: "Доплата (zł):",
         applyBtn: "Застосувати",
 
-        // Дополнительные UI-тексты, вынесенные из app.js
         themeCardTitle: "Тема оформлення",
         themeDarkActive: "Темну тему увімкнено",
         themeLightActive: "Світлу тему увімкнено",

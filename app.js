@@ -340,9 +340,55 @@ function showMainScreen() {
             </div>
 
             <!-- Вкладка: Зарплата -->
-            <div style="display: ${activeTab === 'salary' ? 'block' : 'none'}; background: ${c.gridBg}; border: 1px solid ${c.border}; padding: 12px; border-radius: 8px;">
-                <h3 style="margin-top: 0; color: ${c.text}; font-size: 16px;">${t('salaryViewTitle')}</h3>
-                <p style="color: ${c.textSecondary}; font-size: 13px; line-height: 1.4;">${t('salaryViewDesc')}</p>
+            <div style="display: ${activeTab === 'salary' ? 'block' : 'none'};">
+                <div style="background: ${c.gridBg}; border: 1px solid ${c.border}; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <h3 style="margin-top: 0; color: ${c.text}; font-size: 16px; margin-bottom: 6px;">${t('salaryViewTitle')}</h3>
+                    <p style="color: ${c.textSecondary}; font-size: 12px; line-height: 1.4; margin-bottom: 12px;">${t('salaryViewDesc')}</p>
+                    
+                    <!-- Блок расчетов Netto -->
+                    <div style="background: ${c.cardBg}; border: 1px solid ${c.border}; padding: 12px; border-radius: 8px;">
+                        <div style="font-size: 13px; font-weight: bold; color: ${c.accent}; margin-bottom: 10px; border-bottom: 1px solid ${c.border}; padding-bottom: 6px;">
+                            ${t('salaryHeader')}
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                            <span style="color: ${c.textSecondary};">${t('salaryBruttoLabel')}</span>
+                            <strong style="color: ${c.text};">${(userSettings.monthlyRate || 5800).toFixed(2)} zł</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                            <span style="color: ${c.textSecondary};">${t('zusWorkersLabel')}</span>
+                            <strong style="color: #dc2626;">- ${((userSettings.monthlyRate || 5800) * 0.1166).toFixed(2)} zł</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                            <span style="color: ${c.textSecondary};">${t('healthInsLabel')}</span>
+                            <strong style="color: #dc2626;">- ${(((userSettings.monthlyRate || 5800) - ((userSettings.monthlyRate || 5800) * 0.1166)) * 0.09).toFixed(2)} zł</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+                            <span style="color: ${c.textSecondary};">${t('taxAdvanceLabel')}</span>
+                            <strong style="color: #dc2626;">- ${Math.max(0, (((userSettings.monthlyRate || 5800) - ((userSettings.monthlyRate || 5800) * 0.1166) - 250) * 0.12) - 300).toFixed(2)} zł</strong>
+                        </div>
+                        
+                        <!-- Итоговая чистая зарплата -->
+                        <div style="display: flex; justify-content: space-between; font-size: 15px; border-top: 2px solid ${c.border}; padding-top: 8px; margin-top: 8px; color: #16a34a;">
+                            <span><strong>${t('nettoFinalLabel')}</strong></span>
+                            <strong>${ (() => {
+                                const b = userSettings.monthlyRate || 5800;
+                                const zus = b * 0.1166;
+                                const baseHealth = b - zus;
+                                const health = baseHealth * 0.09;
+                                const baseTax = baseHealth - 250;
+                                const tax = Math.max(0, (baseTax * 0.12) - 300);
+                                const netto = b - zus - health - tax + (userSettings.bonus || 0);
+                                return netto.toFixed(2);
+                            })() } zł</strong>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: ${c.textSecondary}; border-top: 1px dashed ${c.border}; padding-top: 6px; margin-top: 8px;">
+                            <span>${t('employerCostLabel')}</span>
+                            <span>~${((userSettings.monthlyRate || 5800) * 1.2048).toFixed(2)} zł</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Вкладка: Настройки -->
