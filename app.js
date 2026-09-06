@@ -191,35 +191,44 @@ function showMainScreen() {
 
         </div>
 
-        <!-- Модальное окно редактирования дня -->
+        <!-- Модальное окно редактирования дня (как на вашем скриншоте) -->
         <div id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 1000;">
-            <div style="background: #ffffff; padding: 20px; border-radius: 12px; width: 90%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b;">
-                <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 15px; font-size: 18px; text-align: center;">Настройка дня</h3>
+            <div style="background: #ffffff; padding: 20px; border-radius: 12px; width: 90%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #18181b; position: relative;">
                 
-                <div style="margin-bottom: 12px;">
-                    <label style="font-size: 12px; color: #71717a; font-weight: 500;">Тип смены:</label>
-                    <select id="modalShiftType" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; margin-top: 4px;">
-                        <option value="none">Выходной / Не работаю</option>
-                        <option value="1">1 смена (утренняя)</option>
-                        <option value="2">2 смена (вечерняя)</option>
-                        <option value="3">3 смена (ночная)</option>
-                    </select>
+                <!-- Крестик закрытия -->
+                <button onclick="closeDayModal()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 18px; cursor: pointer; color: #71717a;">✕</button>
+
+                <h3 id="modalTitle" style="margin-top: 0; margin-bottom: 15px; font-size: 18px; font-weight: bold;">1 Сентябрь</h3>
+                
+                <div style="font-size: 13px; color: #71717a; margin-bottom: 8px; font-weight: 500;">Быстрый выбор смены:</div>
+                
+                <!-- Кнопки быстрого выбора смен -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px;">
+                    <button type="button" id="btnShift1" onclick="selectModalShift('1')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 12px; font-weight: bold; cursor: pointer;">1 смена</button>
+                    <button type="button" id="btnShift2" onclick="selectModalShift('2')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 12px; font-weight: bold; cursor: pointer;">2 смена</button>
+                    <button type="button" id="btnShift3" onclick="selectModalShift('3')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #18181b; font-size: 12px; font-weight: bold; cursor: pointer;">3 смена</button>
+                    <button type="button" id="btnShiftNone" onclick="selectModalShift('none')" style="padding: 8px 4px; border-radius: 6px; border: 1px solid #d4d4d8; background: #ffffff; color: #71717a; font-size: 11px; font-weight: bold; cursor: pointer;">Выходной</button>
                 </div>
 
-                <div style="margin-bottom: 12px;">
-                    <label style="font-size: 12px; color: #71717a; font-weight: 500;">Всего часов:</label>
-                    <input type="number" id="modalTotalHours" step="0.5" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                <!-- Поля начала и конца -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div>
+                        <label style="font-size: 12px; color: #71717a; font-weight: 500; display: block; margin-bottom: 4px;">Начало:</label>
+                        <input type="time" id="modalStart" value="06:00" onchange="recalculateModalHours()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #71717a; font-weight: 500; display: block; margin-bottom: 4px;">Конец:</label>
+                        <input type="time" id="modalEnd" value="14:00" onchange="recalculateModalHours()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box;">
+                    </div>
                 </div>
 
-                <div style="margin-bottom: 20px;">
-                    <label style="font-size: 12px; color: #71717a; font-weight: 500;">Переработка (Nadgodziny):</label>
-                    <input type="number" id="modalOvertime" step="0.5" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 8px; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                <!-- Строка информации по часам -->
+                <div id="modalStatsInfo" style="background: #f4f4f5; padding: 10px; border-radius: 6px; font-size: 12px; text-align: center; color: #3f3f46; margin-bottom: 20px; font-weight: 500;">
+                    Всего: 8h | База: 8h | Nadg: 0h | Noc: 0.0h
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="closeDayModal()" style="flex: 1; background: #f4f4f5; color: #18181b; border: 1px solid #d4d4d8; padding: 10px; border-radius: 6px; font-weight: 500; cursor: pointer;">Отмена</button>
-                    <button onclick="saveDayModal()" style="flex: 1; background: #2563eb; color: #ffffff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">Сохранить</button>
-                </div>
+                <!-- Кнопка Применить -->
+                <button onclick="saveDayModal()" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;">Применить</button>
             </div>
         </div>
     `;
@@ -295,15 +304,22 @@ function renderCalendarGrid() {
     grid.innerHTML = html;
 }
 
+// Текущая выбранная смена в открытом модальном окне
+let currentModalShift = '1';
+
 // Открытие модального окна для настройки конкретного дня
 function openDayModal(day) {
     selectedDayForModal = day;
-    const s = scheduleData[day] || { shift: '1', totalHours: 8, overtime: 0 };
+    const s = scheduleData[day] || { shift: '1', start: '06:00', end: '14:00' };
     
-    document.getElementById('modalTitle').innerText = `День ${day} ${monthNames[currentMonth]} ${currentYear}`;
-    document.getElementById('modalShiftType').value = s.shift || 'none';
-    document.getElementById('modalTotalHours').value = s.totalHours !== undefined ? s.totalHours : (s.shift !== 'none' ? 8 : 0);
-    document.getElementById('modalOvertime').value = s.overtime || 0;
+    document.getElementById('modalTitle').innerText = `${day} ${monthNames[currentMonth]}`;
+    currentModalShift = s.shift || '1';
+    
+    document.getElementById('modalStart').value = s.start || '06:00';
+    document.getElementById('modalEnd').value = s.end || '14:00';
+    
+    updateModalShiftButtons();
+    recalculateModalHours();
     
     document.getElementById('dayModal').style.display = 'flex';
 }
@@ -313,23 +329,102 @@ function closeDayModal() {
     selectedDayForModal = null;
 }
 
+// Выбор смены кликом по кнопке в модалке
+function selectModalShift(shiftType) {
+    currentModalShift = shiftType;
+    updateModalShiftButtons();
+
+    // Автоматически подставляем стандартное время в зависимости от смены
+    if (shiftType === '1') {
+        document.getElementById('modalStart').value = '06:00';
+        document.getElementById('modalEnd').value = '14:00';
+    } else if (shiftType === '2') {
+        document.getElementById('modalStart').value = '14:00';
+        document.getElementById('modalEnd').value = '22:00';
+    } else if (shiftType === '3') {
+        document.getElementById('modalStart').value = '22:00';
+        document.getElementById('modalEnd').value = '06:00';
+    }
+    recalculateModalHours();
+}
+
+function updateModalShiftButtons() {
+    ['1', '2', '3', 'none'].forEach(type => {
+        const btn = document.getElementById(type === 'none' ? 'btnShiftNone' : `btnShift${type}`);
+        if (!btn) return;
+        if (currentModalShift === type) {
+            btn.style.background = '#2563eb';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#2563eb';
+        } else {
+            btn.style.background = '#ffffff';
+            btn.style.color = type === 'none' ? '#71717a' : '#18181b';
+            btn.style.borderColor = '#d4d4d8';
+        }
+    });
+}
+
+// Расчет часов внутри модалки по времени начала и конца
+function recalculateModalHours() {
+    const startStr = document.getElementById('modalStart').value;
+    const endStr = document.getElementById('modalEnd').value;
+    
+    if (!startStr || !endStr) return;
+
+    let [startH, startM] = startStr.split(':').map(Number);
+    let [endH, endM] = endStr.split(':').map(Number);
+
+    let startMinutes = startH * 60 + startM;
+    let endMinutes = endH * 60 + endM;
+
+    if (endMinutes <= startMinutes) {
+        endMinutes += 24 * 60; // Переход через полночь (ночная смена)
+    }
+
+    let diffMinutes = endMinutes - startMinutes;
+    let totalH = diffMinutes / 60;
+    
+    let baseH = Math.min(totalH, 8);
+    let nadgH = Math.max(0, totalH - 8);
+
+    // Расчет ночных часов (22:00 - 06:00)
+    let nightH = 0;
+    for (let m = startMinutes; m < endMinutes; m += 30) {
+        let hourOfDay = Math.floor((m % (24 * 60)) / 60);
+        if (hourOfDay >= 22 || hourOfDay < 6) {
+            nightH += 0.5;
+        }
+    }
+
+    document.getElementById('modalStatsInfo').innerText = 
+        `Всего: ${totalH}h | База: ${baseH}h | Nadg: ${nadgH}h | Noc: ${nightH.toFixed(1)}h`;
+}
+
 // Сохранение изменений из модального окна
 function saveDayModal() {
     if (selectedDayForModal === null) return;
     
-    const shiftType = document.getElementById('modalShiftType').value;
-    const totalHours = parseFloat(document.getElementById('modalTotalHours').value) || 0;
-    const overtime = parseFloat(document.getElementById('modalOvertime').value) || 0;
+    const startStr = document.getElementById('modalStart').value;
+    const endStr = document.getElementById('modalEnd').value;
 
-    if (shiftType === 'none') {
+    let [startH, startM] = startStr.split(':').map(Number);
+    let [endH, endM] = endStr.split(':').map(Number);
+    let startMinutes = startH * 60 + startM;
+    let endMinutes = endH * 60 + endM;
+    if (endMinutes <= startMinutes) endMinutes += 24 * 60;
+    
+    let totalH = (endMinutes - startMinutes) / 60;
+    let nadgH = Math.max(0, totalH - 8);
+
+    if (currentModalShift === 'none') {
         delete scheduleData[selectedDayForModal];
     } else {
         scheduleData[selectedDayForModal] = {
-            shift: shiftType,
-            start: '06:00',
-            end: '14:00',
-            totalHours: totalHours,
-            overtime: overtime
+            shift: currentModalShift,
+            start: startStr,
+            end: endStr,
+            totalHours: totalH,
+            overtime: nadgH
         };
     }
 
@@ -338,7 +433,7 @@ function saveDayModal() {
     calculateStats();
 }
 
-// Расчет статистики
+// Расчет общей статистики внизу
 function calculateStats() {
     let daysWorked = 0;
     let totalHours = 0;
