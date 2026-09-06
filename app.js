@@ -77,6 +77,18 @@ function initApp() {
         showAuthScreen();
     } else {
         apiLoadSettings().then(() => {
+            // Восстанавливаем сохраненное в браузере начало смены, если сервер сбрасывает
+            const savedShift1 = localStorage.getItem('shift1Start');
+            if (savedShift1) {
+                userSettings.shift1Start = savedShift1;
+                let [h, m] = savedShift1.split(':').map(Number);
+                let d2StartH = (h + 8) % 24;
+                let d3StartH = (h + 16) % 24;
+                let formatTime = (num) => String(num).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                userSettings.shift2Start = formatTime(d2StartH);
+                userSettings.shift3Start = formatTime(d3StartH);
+            }
+
             showMainScreen();
             apiLoadShifts(() => {
                 setUnsavedChanges(false);
@@ -192,6 +204,7 @@ window.updateShift1ConfigFromUI = function() {
     if (!inputVal) return;
 
     userSettings.shift1Start = inputVal;
+    localStorage.setItem('shift1Start', inputVal); // Сохраняем в память браузера
     
     let [h, m] = inputVal.split(':').map(Number);
     let d2StartH = (h + 8) % 24;
