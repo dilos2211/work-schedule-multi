@@ -718,9 +718,13 @@ function calculateStats() {
             totalDays++;
             const th = s.totalHours || 0;
             totalHoursAll += th;
-            const ot = s.overtime || 0;
+            
+            // Всё, что превышает 8 часов за день (включая работу в субботу/воскресенье), идет в переработку
+            const ot = Math.max(0, th - 8);
             totalOvertimeH += ot;
-            totalBaseH += Math.max(0, th - ot);
+            
+            // Базовые часы за день не могут превышать 8
+            totalBaseH += Math.min(th, 8);
         }
     });
 
@@ -757,10 +761,10 @@ function calculateStats() {
     const zusWorkers = totalBrutto * 0.1166;
     const healthBase = totalBrutto - zusWorkers;
     const healthIns = healthBase * 0.09;
-    const taxBase = healthBase - 250; // Koszty uzyskania przychodu = 250 zł
-    const taxAdvance = Math.max(0, (taxBase * 0.12) - 300); // 12% PIT минус kwota wolna (300 zł)
+    const taxBase = healthBase - 250; 
+    const taxAdvance = Math.max(0, (taxBase * 0.12) - 300); 
     const nettoFinal = totalBrutto - zusWorkers - healthIns - taxAdvance;
-    const employerCost = totalBrutto * 1.2048; // Примерная общая стоимость для работодателя
+    const employerCost = totalBrutto * 1.2048; 
 
     const elTabBrutto = document.getElementById('salaryTabTotalBrutto');
     const elTabZus = document.getElementById('salaryTabZus');
