@@ -10,7 +10,7 @@ let selectedDayForModal = null;
 let userSettings = {
     calcType: 'monthly',
     monthlyRate: 5500,
-    rate: 25,
+    rate: 25, // Почасовая ставка по умолчанию
     bonus: 850,
     manualKantyna: 0
 };
@@ -20,7 +20,6 @@ const monthNames = [
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
 ];
 
-// Список фиксированных польских праздников (месяц 0-11, день)
 const polishHolidaysFixed = [
     { m: 0, d: 1, name: "Nowy Rok" },
     { m: 0, d: 6, name: "Trzech Króli" },
@@ -33,7 +32,6 @@ const polishHolidaysFixed = [
     { m: 11, d: 26, name: "Drugi dzień Bożego Narodzenia" }
 ];
 
-// Функция расчета Пасхи и переходящих праздников в Польше (Великоднее воскресенье, Понедельник, Божье Тело)
 function getPolishFloatingHolidays(year) {
     let a = year % 19,
         b = Math.floor(year / 100),
@@ -52,15 +50,12 @@ function getPolishFloatingHolidays(year) {
 
     let easterDate = new Date(year, month, day);
     
-    // Пасхальный понедельник (+1 день)
     let easterMonday = new Date(easterDate);
     easterMonday.setDate(easterDate.getDate() + 1);
 
-    // Зеленые святки (Zesłanie Ducha Świętego / Zielone Świątki) (+49 дней)
     let pentecost = new Date(easterDate);
     pentecost.setDate(easterDate.getDate() + 49);
 
-    // Божье Тело (Boże Ciało) (+60 дней)
     let corpusChristi = new Date(easterDate);
     corpusChristi.setDate(easterDate.getDate() + 60);
 
@@ -71,7 +66,6 @@ function getPolishFloatingHolidays(year) {
     ];
 }
 
-// Проверка, является ли день официальным праздником в Польше
 function getHolidayName(year, month, day) {
     let holidays = [...polishHolidaysFixed, ...getPolishFloatingHolidays(year)];
     let found = holidays.find(h => h.m === month && h.d === day);
@@ -170,6 +164,8 @@ function logout() {
 // --- ГЛАВНЫЙ ЭКРАН ---
 
 function showMainScreen() {
+    const isHourly = userSettings.calcType === 'hourly';
+
     document.body.style.backgroundColor = "#f4f4f5";
     document.body.innerHTML = `
         <div class="main-wrapper" style="max-width: 480px; margin: 20px auto; font-family: sans-serif; background: #ffffff; color: #18181b; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
@@ -206,14 +202,14 @@ function showMainScreen() {
                     <div style="margin-bottom: 8px;">
                         <label style="font-size: 12px; color: #71717a; font-weight: 500;">Тип оплаты:</label>
                         <select id="calcType" onchange="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px;">
-                            <option value="monthly" ${userSettings.calcType === 'monthly' ? 'selected' : ''}>Оклад за месяц (zł/мес)</option>
-                            <option value="hourly" ${userSettings.calcType === 'hourly' ? 'selected' : ''}>Почасовая ставка (zł/ч)</option>
+                            <option value="monthly" ${!isHourly ? 'selected' : ''}>Оклад за месяц (zł/мес)</option>
+                            <option value="hourly" ${isHourly ? 'selected' : ''}>Почасовая ставка (zł/ч)</option>
                         </select>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
-                            <label style="font-size: 12px; color: #71717a; font-weight: 500;">Оклад брутто (zł):</label>
-                            <input type="number" id="inputRateValue" value="${userSettings.monthlyRate}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box;">
+                            <label style="font-size: 12px; color: #71717a; font-weight: 500;" id="labelRateName">${isHourly ? 'Ставка в час (zł):' : 'Оклад брутто (zł):'}</label>
+                            <input type="number" id="inputRateValue" value="${isHourly ? userSettings.rate : userSettings.monthlyRate}" oninput="updateSettingsFromUI()" style="width: 100%; background: #ffffff; color: #18181b; border: 1px solid #d4d4d8; padding: 6px; border-radius: 6px; box-sizing: border-box;">
                         </div>
                         <div>
                             <label style="font-size: 12px; color: #71717a; font-weight: 500;">Премия брутто (zł):</label>
@@ -287,7 +283,7 @@ function showMainScreen() {
     calculateStats();
 }
 
-// --- ЛОГИКА КАЛЕНДАРЯ И ПОДСВЕТКИ ВЫХОДНЫХ/ПРАЗДНИКОВ ---
+// --- ЛОГИКА КАЛЕНДАРЯ И РАСЧЕТОВ ---
 
 function switchTab(tab) {
     activeTab = tab;
@@ -302,13 +298,26 @@ function changeMonthYear() {
 
 function updateSettingsFromUI() {
     userSettings.calcType = document.getElementById('calcType').value;
-    userSettings.monthlyRate = parseFloat(document.getElementById('inputRateValue').value) || 0;
+    const valInput = parseFloat(document.getElementById('inputRateValue').value) || 0;
+    
+    if (userSettings.calcType === 'hourly') {
+        userSettings.rate = valInput;
+    } else {
+        userSettings.monthlyRate = valInput;
+    }
+    
     userSettings.bonus = parseFloat(document.getElementById('inputBonus').value) || 0;
+    
+    // Динамически меняем текст подписи инпута в зависимости от выбора типа оплаты
+    const labelElem = document.getElementById('labelRateName');
+    if (labelElem) {
+        labelElem.innerText = userSettings.calcType === 'hourly' ? 'Ставка в час (zł):' : 'Оклад брутто (zł):';
+    }
+
     saveSettingsToServer();
     calculateStats();
 }
 
-// Отрисовка сетки дней месяца с подсветкой выходных (сб, вс) и гос. праздников Польши красным цветом
 function renderCalendarGrid() {
     const grid = document.getElementById('calendarGrid');
     if (!grid) return;
@@ -335,12 +344,9 @@ function renderCalendarGrid() {
     for (let day = 1; day <= daysInMonth; day++) {
         const s = scheduleData[day] || { shift: 'none', totalHours: 0, overtime: 0 };
         
-        // Определяем день недели (0 - Пн, ..., 5 - Сб, 6 - Вс)
         let dateObj = new Date(currentYear, currentMonth, day);
         let dayOfWeek = dateObj.getDay();
-        let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6); // Суббота или Воскресенье
-        
-        // Проверяем, польский ли это праздник
+        let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
         let holidayName = getHolidayName(currentYear, currentMonth, day);
         let isHoliday = (holidayName !== null);
 
@@ -351,7 +357,6 @@ function renderCalendarGrid() {
         let badgeText = 'выходной';
         let dayNumberColor = '#18181b';
 
-        // Если смена выбрана — приоритет цвета смены
         if (s.shift === '1') {
             bgStyle = '#eff6ff'; borderStyle = '#bfdbfe'; badgeBg = '#dbeafe'; badgeColor = '#1d4ed8'; badgeText = '1 смена';
         } else if (s.shift === '2') {
@@ -360,12 +365,11 @@ function renderCalendarGrid() {
             bgStyle = '#f5f3ff'; borderStyle = '#ddd6fe'; badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; badgeText = '3 смена';
         }
 
-        // Если день — выходной (суббота/воскресенье) или государственный праздник, подсвечиваем номер и рамку красным
         if (isWeekend || isHoliday) {
-            dayNumberColor = '#dc2626'; // Красный цвет для числа
+            dayNumberColor = '#dc2626';
             if (s.shift === 'none') {
                 borderStyle = '#fca5a5';
-                bgStyle = '#fef2f2'; // Легкий розово-красный фон для свободных выходных/праздников
+                bgStyle = '#fef2f2';
                 if (isHoliday) badgeText = 'праздник';
             }
         }
@@ -526,7 +530,16 @@ function calculateStats() {
     document.getElementById('statNight').innerText = `0.0 ч`;
     document.getElementById('statTotalHours').innerText = `${totalHours.toFixed(1)} ч`;
 
-    let totalMoney = userSettings.monthlyRate + userSettings.bonus;
+    // Расчет общей суммы в зависимости от типа оплаты:
+    let totalMoney = 0;
+    if (userSettings.calcType === 'hourly') {
+        // Почасовая оплата: все отработанные часы умножаются на ставку в час + премия
+        totalMoney = (totalHours * userSettings.rate) + userSettings.bonus;
+    } else {
+        // Оклад: фиксированный оклад + премия
+        totalMoney = userSettings.monthlyRate + userSettings.bonus;
+    }
+
     document.getElementById('statTotalMoney').innerText = `${totalMoney.toFixed(2)} zł`;
 }
 
