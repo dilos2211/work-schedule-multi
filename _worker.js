@@ -10,145 +10,188 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const db = env.DB;
+
+    // Проверка подключения к базе
+    if (!db) {
+      return new Response(JSON.stringify({ success: false, error: "База данных D1 не привязана!" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     try {
-      if (!env.DB) {
-        return new Response(JSON.stringify({ success: false, error: "Ошибка сервера: База данных D1 не привязана в Cloudflare!" }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-
-      const url = new URL(request.url);
-      const path = url.pathname;
-      const db = env.DB;
-
-      // 1. РЕГИСТРАЦИЯ
-      if (path.includes("/register") && request.method === "POST") {
-        let body;
-        try {
-          body = await request.json();
-        } catch (e) {
-          return new Response(JSON.stringify({ success: false, error: "Неверный формат JSON" }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        const email = body.email;
-        const password = body.password;
+      // 🔹 1. Регистрация
+      if (path === "/api/register" && request.method === "POST") {
+        const body = await request.json();
+        const { email, password } = body;
 
         if (!email || !password) {
-          return new Response(JSON.stringify({ success: false, error: "Заполните все поля" }), { 
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          return new Response(JSON.stringify({ success: false, error: "Заполните все поля" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
-        const existing = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
+        const existing = await db.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
         if (existing) {
-          return new Response(JSON.stringify({ success: false, error: "Пользователь с таким email уже существует" }), { 
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          return new Response(JSON.stringify({ success: false, error: "Пользователь уже существует" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
-        await db.prepare("INSERT INTO users (email, password) VALUES (?, ?)").bind(email, password).run();
+        // Хэширование пароля
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        const passwordHash = Array.from(new Uint8Array(hashBuffer))
+          .map(b => b.toString(16).padStart(2, "0"))
+          .join("");
+
+        await db.prepare("INSERT INTO users (email, password_hash) VALUES (?, ?)").bind(email, passwordHash).run();
         const newUser = await db.prepare("SELECT id, email FROM users WHERE email = ?").bind(email).first();
 
-        return new Response(JSON.stringify({ success: true, user: newUser }), { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        // Создаём базовые настройки
+        await db.prepare("INSERT INTO user_settings (user_id) VALUES (?)").bind(newUser.id).run();
+
+        return new Response(JSON.stringify({ success: true, user: newUser }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // 2. ВХОД
-      if (path.includes("/login") && request.method === "POST") {
-        let body = await request.json();
-        const user = await db.prepare("SELECT * FROM users WHERE email = ? AND password = ?").bind(body.email, body.password).first();
+      // 🔹 2. Вход
+      if (path === "/api/login" && request.method === "POST") {
+        const body = await request.json();
+        const { email, password } = body;
 
+        const user = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
         if (!user) {
-          return new Response(JSON.stringify({ success: false, error: "Неверный email или пароль" }), { 
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          return new Response(JSON.stringify({ success: false, error: "Неверный email или пароль" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
-        return new Response(JSON.stringify({ success: true, user: { id: user.id, email: user.email } }), { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        // Проверка пароля
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        const passwordHash = Array.from(new Uint8Array(hashBuffer))
+          .map(b => b.toString(16).padStart(2, "0"))
+          .join("");
+
+        if (passwordHash !== user.password_hash) {
+          return new Response(JSON.stringify({ success: false, error: "Неверный email или пароль" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ success: true, user: { id: user.id, email: user.email } }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // 3. ПОЛУЧЕНИЕ НАСТРОЕК
-      if (path.includes("/settings") && request.method === "GET") {
+      // 🔹 3. Получение настроек
+      if (path === "/api/settings" && request.method === "GET") {
         const userId = url.searchParams.get("userId");
-        const settings = await db.prepare("SELECT * FROM settings WHERE user_id = ?").bind(userId).first();
-        return new Response(JSON.stringify(settings || {}), { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        const settings = await db.prepare("SELECT * FROM user_settings WHERE user_id = ?").bind(userId).first();
+        return new Response(JSON.stringify(settings || {}), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // 4. СОХРАНЕНИЕ НАСТРОЕК
-      if (path.includes("/settings") && request.method === "POST") {
-        let body = await request.json();
+      // 🔹 4. Сохранение настроек
+      if (path === "/api/settings" && request.method === "POST") {
+        const body = await request.json();
         await db.prepare(`
-          INSERT INTO settings (user_id, calc_type, monthly_rate, rate, bonus, manual_kantyna)
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO user_settings (user_id, calc_type, monthly_rate, rate, bonus, manual_kantyna, shift1_start)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(user_id) DO UPDATE SET
             calc_type = excluded.calc_type,
             monthly_rate = excluded.monthly_rate,
             rate = excluded.rate,
             bonus = excluded.bonus,
-            manual_kantyna = excluded.manual_kantyna
-        `).bind(body.userId, body.calcType, body.monthlyRate, body.rate, body.bonus, body.manualKantyna).run();
+            manual_kantyna = excluded.manual_kantyna,
+            shift1_start = excluded.shift1_start
+        `).bind(
+          body.userId,
+          body.calcType,
+          body.monthlyRate,
+          body.rate,
+          body.bonus,
+          body.manualKantyna,
+          body.shift1Start || "06:00"
+        ).run();
 
-        return new Response(JSON.stringify({ success: true }), { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // 5. ПОЛУЧЕНИЕ СМЕН
-      if (path.includes("/shifts") && request.method === "GET") {
+      // 🔹 5. Получение смен
+      if (path === "/api/shifts" && request.method === "GET") {
         const userId = url.searchParams.get("userId");
         const year = url.searchParams.get("year");
-        const month = String(parseInt(url.searchParams.get("month")) + 1).padStart(2, '0');
-        const prefix = `${year}-${month}`;
+        const month = url.searchParams.get("month");
+        const prefix = `${year}-${String(parseInt(month) + 1).padStart(2, "0")}`;
 
         const { results } = await db.prepare(
-          "SELECT * FROM shifts WHERE user_id = ? AND work_date LIKE ?"
+          "SELECT work_date, shift_type, start_time, end_time, total_hours, overtime_hours, hours_50, hours_100, bonus_zl FROM reports WHERE user_id = ? AND work_date LIKE ?"
         ).bind(userId, `${prefix}%`).all();
 
-        return new Response(JSON.stringify(results || []), { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        return new Response(JSON.stringify(results || []), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // 6. СОХРАНЕНИЕ СМЕН
-      if (path.includes("/shifts") && request.method === "POST") {
-        let body = await request.json();
-        const mStr = String(parseInt(body.month) + 1).padStart(2, '0');
-        const scheduleData = body.scheduleData;
+      // 🔹 6. Сохранение смен
+      if (path === "/api/shifts" && request.method === "POST") {
+        const body = await request.json();
+        const { userId, year, month, scheduleData } = body;
+        const monthStr = String(parseInt(month) + 1).padStart(2, "0");
 
-        for (const day in scheduleData) {
-          const dStr = String(day).padStart(2, '0');
-          const dateFull = `${body.year}-${mStr}-${dStr}`;
-          const s = scheduleData[day];
+        for (const [day, data] of Object.entries(scheduleData)) {
+          const dayStr = String(day).padStart(2, "0");
+          const dateFull = `${year}-${monthStr}-${dayStr}`;
 
-          await db.prepare("DELETE FROM shifts WHERE user_id = ? AND work_date = ?").bind(body.userId, dateFull).run();
+          await db.prepare("DELETE FROM reports WHERE user_id = ? AND work_date = ?").bind(userId, dateFull).run();
 
-          if (s.shift && s.shift !== 'none') {
+          if (data.shift && data.shift !== "none") {
             await db.prepare(`
-              INSERT INTO shifts (user_id, work_date, shift_type, start_time, end_time, total_hours, overtime_hours)
-              VALUES (?, ?, ?, ?, ?, ?, ?)
-            `).bind(body.userId, dateFull, s.shift, s.start, s.end, s.totalHours, s.overtime).run();
+              INSERT INTO reports (user_id, work_date, shift_type, start_time, end_time, total_hours, overtime_hours, hours_50, hours_100, bonus_zl)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              userId,
+              dateFull,
+              data.shift,
+              data.start,
+              data.end,
+              data.totalHours || 0,
+              data.overtime || 0,
+              data.hours50 || 0,
+              data.hours100 || 0,
+              data.bonusZl || 0
+            ).run();
           }
         }
 
-        return new Response(JSON.stringify({ success: true }), { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Если это не API-запрос, отдаем статические файлы (HTML, CSS, JS) из Cloudflare Pages
+      // 🔹 7. Отдача статических файлов
       return env.ASSETS.fetch(request);
 
     } catch (err) {
-      return new Response(JSON.stringify({ success: false, error: "Worker Exception: " + err.message }), { 
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      return new Response(JSON.stringify({ success: false, error: "Worker Exception: " + err.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-  }
+  },
 };
