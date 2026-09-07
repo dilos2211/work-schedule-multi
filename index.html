@@ -1,16 +1,108 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Календарь смен и Расчет ЗП</title>
-  <link rel="stylesheet" href="style.css?v=3">
+    <meta charset="UTF-8">
+    <title>Work Schedule Multi</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+    <script src="salary.js" defer></script>
 </head>
-<body style="background-color: #f4f4f5; margin: 0; padding: 0;">
 
-  <!-- Главный контейнер, в который app.js динамически загружает экраны -->
-  <div id="app"></div>
+<body>
 
-  <script type="module" src="app.js"></script>
+<div class="container">
+
+    <h1>Work Schedule Multi</h1>
+
+    <!-- Навигация -->
+    <div class="tabs">
+        <button class="tab-button" onclick="openTab('login-tab')">Вход</button>
+        <button class="tab-button" onclick="openTab('settings-tab')">Настройки</button>
+        <button class="tab-button" onclick="openTab('schedule-tab')">График</button>
+        <button class="tab-button" onclick="openTab('salary-tab')">Зарплата</button>
+    </div>
+
+    <!-- Вкладка Вход -->
+    <div id="login-tab" class="tab-content">
+        <h2>Вход</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Пароль">
+        <button onclick="login()">Войти</button>
+
+        <h3>Регистрация</h3>
+        <input type="email" id="reg-email" placeholder="Email">
+        <input type="password" id="reg-password" placeholder="Пароль">
+        <button onclick="register()">Регистрация</button>
+    </div>
+
+    <!-- Вкладка Настройки -->
+    <div id="settings-tab" class="tab-content">
+        <h2>Настройки</h2>
+
+        <label>Тип расчёта:</label>
+        <select id="calc-type">
+            <option value="monthly">Месячная ставка</option>
+        </select>
+
+        <label>Месячная ставка (S):</label>
+        <input type="number" id="monthly-rate" value="5500">
+
+        <label>Бонус (фиксированный):</label>
+        <input type="number" id="bonus" value="850">
+
+        <label>Начало 1 смены:</label>
+        <input type="time" id="shift1-start" value="06:00">
+
+        <button onclick="saveSettings()">Сохранить</button>
+    </div>
+
+    <!-- Вкладка График -->
+    <div id="schedule-tab" class="tab-content">
+        <h2>График</h2>
+
+        <label>Год:</label>
+        <input type="number" id="year" value="2026">
+
+        <label>Месяц:</label>
+        <input type="number" id="month" value="8">
+
+        <button onclick="loadSchedule()">Загрузить</button>
+        <button onclick="saveSchedule()">Сохранить</button>
+
+        <div id="schedule-container"></div>
+    </div>
+
+    <!-- Вкладка Зарплата -->
+    <div id="salary-tab" class="tab-content">
+        <h2>Зарплата</h2>
+
+        <div class="salary-inputs">
+            <label>Год:</label>
+            <input type="number" id="salary-year" value="2026">
+
+            <label>Месяц:</label>
+            <input type="number" id="salary-month" value="8">
+
+            <button onclick="loadSalary()">Рассчитать</button>
+        </div>
+
+        <div class="salary-results">
+            <h3>Результаты</h3>
+            <p><strong>Брутто:</strong> <span id="salary-brutto">0 zł</span></p>
+            <p><strong>Нетто:</strong> <span id="salary-netto">0 zł</span></p>
+
+            <h3>Детализация</h3>
+            <p><strong>ZUS:</strong> <span id="salary-zus">0 zł</span></p>
+            <p><strong>PIT:</strong> <span id="salary-pit">0 zł</span></p>
+
+            <h3>Часы</h3>
+            <p><strong>Всего часов:</strong> <span id="salary-hours">0</span></p>
+            <p><strong>+50%:</strong> <span id="salary-hours50">0</span></p>
+            <p><strong>+100%:</strong> <span id="salary-hours100">0</span></p>
+        </div>
+    </div>
+
+</div>
+
 </body>
 </html>
