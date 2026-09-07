@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "include": [
+    "/*"
+  ],
+  "exclude": [
+    "/index.html",
+    "/style.css",
+    "/app.js",
+    "/*.png",
+    "/*.jpg",
+    "/*.ico",
+    "/*.svg"
+  ]
+}
