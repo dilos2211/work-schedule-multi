@@ -1,117 +1,89 @@
 // =========================================
-// Work Schedule Multi — salary.js (extended)
+// Work Schedule Multi — salary.js
 // =========================================
 //
-// Улучшения:
-// - Полная детализация ZUS
-// - Полная детализация PIT
-// - Стоимость часа, ночного часа, переработок
-// - Поддержка премий и бонусов
-// - Проверка ошибок
-// - Красивый вывод
+// Отвечает за:
+// - загрузку расчёта зарплаты из backend
+// - вывод данных в карточки интерфейса
 // =========================================
 
 
-// =========================================
-// Загрузка зарплаты с backend
-// =========================================
 async function loadSalary() {
     const userId = localStorage.getItem("userId");
     if (!userId) {
-        alert("Ошибка: пользователь не найден");
+        alert("Błąd: użytkownik nie znaleziony");
         return;
     }
 
-    const year = document.getElementById("salary-year").value;
-    const month = document.getElementById("salary-month").value;
+    const year = Number(document.getElementById("salary-year").value);
+    const month = Number(document.getElementById("salary-month").value);
 
-    const url = `/api/salary?userId=${userId}&year=${year}&month=${month}`;
+    try {
+        const res = await fetch(`/api/salary?userId=${userId}&year=${year}&month=${month}`);
+        const data = await res.json();
 
-    const res = await fetch(url);
-    const data = await res.json();
+        if (!data.success) {
+            alert(data.error || "Błąd obliczeń wynagrodzenia");
+            return;
+        }
 
-    if (!data.success) {
-        alert(data.error || "Ошибка расчёта зарплаты");
-        return;
+        // ============================
+        // Wyświetlanie wyników
+        // ============================
+
+        // Brutto / Netto
+        document.getElementById("salary-brutto").innerText =
+            (data.brutto || 0).toFixed(2) + " zł";
+
+        document.getElementById("salary-netto").innerText =
+            (data.netto || 0).toFixed(2) + " zł";
+
+        // ZUS
+        document.getElementById("salary-zus").innerText =
+            (data.zus_total || 0).toFixed(2) + " zł";
+
+        // PIT
+        document.getElementById("salary-pit").innerText =
+            (data.pit_final || 0).toFixed(2) + " zł";
+
+        // Godziny
+        document.getElementById("salary-hours").innerText =
+            (data.totalHours || 0).toFixed(2);
+
+        document.getElementById("salary-hours50").innerText =
+            (data.overtime50 || 0).toFixed(2);
+
+        document.getElementById("salary-hours100").innerText =
+            (data.overtime100 || 0).toFixed(2);
+
+        // Jeśli masz dodatkowe pola (stawka godzinowa itd.)
+        if (document.getElementById("salary-hourly-base")) {
+            document.getElementById("salary-hourly-base").innerText =
+                (data.hourlyBase || 0).toFixed(2) + " zł";
+        }
+
+        if (document.getElementById("salary-hourly-night")) {
+            document.getElementById("salary-hourly-night").innerText =
+                (data.hourlyNight || 0).toFixed(2) + " zł";
+        }
+
+        if (document.getElementById("salary-hourly-50")) {
+            document.getElementById("salary-hourly-50").innerText =
+                (data.hourly50 || 0).toFixed(2) + " zł";
+        }
+
+        if (document.getElementById("salary-hourly-100")) {
+            document.getElementById("salary-hourly-100").innerText =
+                (data.hourly100 || 0).toFixed(2) + " zł";
+        }
+
+        if (document.getElementById("salary-premia")) {
+            document.getElementById("salary-premia").innerText =
+                (data.premia || 0).toFixed(2) + " zł";
+        }
+
+    } catch (err) {
+        console.error("Błąd ładowania wynagrodzenia:", err);
+        alert("Błąd ładowania wynagrodzenia");
     }
-
-    // Брутто
-    const brutto = data.brutto;
-
-    // Часы
-    const totalHours = data.totalHours;
-    const nightHours = data.nightHours;
-    const overtime50 = data.overtime50;
-    const overtime100 = data.overtime100;
-
-    // Премия
-    const premia = data.premia || 0;
-
-    // =========================================
-    // Стоимость часа
-    // =========================================
-    const hourlyBase = totalHours > 0 ? brutto / totalHours : 0;
-    const hourlyNight = hourlyBase * 1.2;      // ночные +20%
-    const hourly50 = hourlyBase * 1.5;         // переработка +50%
-    const hourly100 = hourlyBase * 2.0;        // переработка +100%
-
-    // =========================================
-    // ZUS pracownik
-    // =========================================
-    const zus_emerytalne = brutto * 0.0976;
-    const zus_rentowe = brutto * 0.015;
-    const zus_chorobowe = brutto * 0.0245;
-
-    const zus_total = zus_emerytalne + zus_rentowe + zus_chorobowe;
-
-    // =========================================
-    // PIT
-    // =========================================
-    const pit_base = brutto - zus_total;
-    const pit_raw = pit_base * 0.12;
-
-    const kwota_wolna = 300; // стандарт Польша
-    const pit_final = Math.max(pit_raw - kwota_wolna, 0);
-
-    // =========================================
-    // NETTO
-    // =========================================
-    const netto = brutto - zus_total - pit_final;
-
-    // =========================================
-    // Вывод результата
-    // =========================================
-
-    document.getElementById("salary-brutto").innerText = brutto.toFixed(2) + " zł";
-    document.getElementById("salary-netto").innerText = netto.toFixed(2) + " zł";
-
-    // Детализация ZUS
-    document.getElementById("salary-zus").innerText = zus_total.toFixed(2) + " zł";
-
-    // Детализация PIT
-    document.getElementById("salary-pit").innerText = pit_final.toFixed(2) + " zł";
-
-    // Часы
-    document.getElementById("salary-hours").innerText = totalHours.toFixed(2);
-    document.getElementById("salary-hours50").innerText = overtime50.toFixed(2);
-    document.getElementById("salary-hours100").innerText = overtime100.toFixed(2);
-
-    // =========================================
-    // Дополнительные поля (если хочешь вывести)
-    // =========================================
-
-    if (document.getElementById("salary-hourly-base"))
-        document.getElementById("salary-hourly-base").innerText = hourlyBase.toFixed(2) + " zł";
-
-    if (document.getElementById("salary-hourly-night"))
-        document.getElementById("salary-hourly-night").innerText = hourlyNight.toFixed(2) + " zł";
-
-    if (document.getElementById("salary-hourly-50"))
-        document.getElementById("salary-hourly-50").innerText = hourly50.toFixed(2) + " zł";
-
-    if (document.getElementById("salary-hourly-100"))
-        document.getElementById("salary-hourly-100").innerText = hourly100.toFixed(2) + " zł";
-
-    if (document.getElementById("salary-premia"))
-        document.getElementById("salary-premia").innerText = premia.toFixed(2) + " zł";
 }

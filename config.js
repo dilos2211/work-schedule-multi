@@ -1,72 +1,86 @@
 // =========================================
-// Конфигурация смен Work Schedule Multi
+// Work Schedule Multi — config.js
 // =========================================
 //
-// Этот файл определяет:
-// - стандартные смены (1, 2, 3)
-// - их время начала и конца
-// - правила автозаполнения
-//
-// Фронтенд использует эти данные для:
-// - автоматического заполнения времени при выборе смены
-// - отображения подсказок
-// - будущих расширений (например, шаблоны графиков)
+// Определяет:
+// - смены (1, 2, 3)
+// - время начала и конца
+// - описания
+// - экспорт функций для schedule.js
 // =========================================
+
 
 const SHIFT_CONFIG = {
     "1": {
-        name: "1 смена",
+        name: "1 zmiana",
         start: "06:00",
         end: "14:00",
-        description: "Утренняя смена 06:00–14:00"
+        color: "shift-1",
+        description: "Zmiana poranna 06:00–14:00"
     },
 
     "2": {
-        name: "2 смена",
+        name: "2 zmiana",
         start: "14:00",
         end: "22:00",
-        description: "Дневная смена 14:00–22:00"
+        color: "shift-2",
+        description: "Zmiana popołudniowa 14:00–22:00"
     },
 
     "3": {
-        name: "3 смена",
+        name: "3 zmiana",
         start: "22:00",
         end: "06:00",
-        description: "Ночная смена 22:00–06:00"
+        color: "shift-3",
+        description: "Zmiana nocna 22:00–06:00"
     },
 
-    "none": {
-        name: "Нет",
+    "0": {
+        name: "Brak",
         start: "",
         end: "",
-        description: "Нет смены"
+        color: "",
+        description: "Dzień wolny"
     }
 };
 
-// =========================================
-// Автозаполнение времени смены
-// =========================================
-//
-// schedule.js вызывает эту функцию при выборе смены.
-// Она возвращает:
-// - start: время начала
-// - end: время конца
-// =========================================
 
+// =========================================
+// Pobieranie czasu zmiany
+// =========================================
 function getShiftTimes(shiftType) {
-    if (!SHIFT_CONFIG[shiftType]) {
+    const shift = SHIFT_CONFIG[shiftType];
+    if (!shift) {
         return { start: "", end: "" };
     }
 
     return {
-        start: SHIFT_CONFIG[shiftType].start,
-        end: SHIFT_CONFIG[shiftType].end
+        start: shift.start,
+        end: shift.end
     };
 }
 
-// =========================================
-// Экспорт для других файлов
-// =========================================
 
+// =========================================
+// Pobieranie nazwy zmiany
+// =========================================
+function getShiftName(shiftType) {
+    return SHIFT_CONFIG[shiftType]?.name || "Brak";
+}
+
+
+// =========================================
+// Pobieranie klasy koloru (CSS)
+// =========================================
+function getShiftColor(shiftType) {
+    return SHIFT_CONFIG[shiftType]?.color || "";
+}
+
+
+// =========================================
+// Eksport
+// =========================================
 window.SHIFT_CONFIG = SHIFT_CONFIG;
 window.getShiftTimes = getShiftTimes;
+window.getShiftName = getShiftName;
+window.getShiftColor = getShiftColor;
